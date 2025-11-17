@@ -61,7 +61,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 return Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(5),
                       child: AspectRatio(
                         aspectRatio: 1,
                         child: FittedBox(
@@ -95,8 +95,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     child: const Center(
                       child: Icon(Icons.add, size: 40, color: Colors.grey),
@@ -143,7 +142,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           // 用户编号输入框
           if (provider.selectedUser != null)
             Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 12),
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),

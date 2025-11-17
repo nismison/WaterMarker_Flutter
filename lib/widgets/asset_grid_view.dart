@@ -25,7 +25,9 @@ class _AssetGridViewState extends State<AssetGridView> {
     if (_thumbCache.containsKey(asset.id)) {
       return _thumbCache[asset.id];
     }
-    final data = await asset.thumbnailDataWithSize(const ThumbnailSize(200, 200));
+    final data = await asset.thumbnailDataWithSize(
+      const ThumbnailSize(200, 200),
+    );
     if (data != null) {
       _thumbCache[asset.id] = data;
     }
@@ -98,9 +100,9 @@ class _AssetTile extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // 图片永不重绘
-          Image.memory(
-            thumbBytes,
-            fit: BoxFit.cover,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: Image.memory(thumbBytes, fit: BoxFit.cover),
           ),
           // 仅重绘勾选部分，局部刷新
           ValueListenableBuilder<Set<String>>(
@@ -119,7 +121,11 @@ class _AssetTile extends StatelessWidget {
                       color: Colors.blue,
                     ),
                     padding: const EdgeInsets.all(4),
-                    child: const Icon(Icons.check, size: 14, color: Colors.white),
+                    child: const Icon(
+                      Icons.check,
+                      size: 14,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               );
