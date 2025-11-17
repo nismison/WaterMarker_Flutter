@@ -20,7 +20,22 @@ class ImagePickerProvider extends ChangeNotifier {
   Map<String, dynamic>? selectedUser; // 当前选中的用户数据
 
   List<XFile> get pickedImages => List.unmodifiable(_pickedImages);
+
+  List<String> get pickedPaths => _pickedImages.map((e) => e.path).toList();
+
   bool get canAddMore => _pickedImages.length < maxImages;
+
+  /// 从路径列表批量添加（选择页面返回的结果）
+  void addSelected(List<String> paths) {
+    final existing = pickedPaths.toSet();
+    final remain = maxImages - _pickedImages.length;
+
+    final Iterable<String> toAdd =
+    paths.where((p) => !existing.contains(p)).take(remain);
+
+    _pickedImages.addAll(toAdd.map((p) => XFile(p)));
+    notifyListeners();
+  }
 
   Future<void> addImages(List<XFile> images) async {
     _pickedImages.addAll(images.take(maxImages - _pickedImages.length));

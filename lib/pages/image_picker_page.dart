@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:water_marker_test2/pages/select_images_page.dart';
 import '../providers/image_picker_provider.dart';
+import '../router.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
 import '../widgets/user_picker_dialog.dart';
@@ -89,11 +91,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               } else {
                 // 添加图片按钮
                 return GestureDetector(
-                  onTap: () async {
-                    final List<XFile>? images = await ImagePicker()
-                        .pickMultiImage();
-                    if (images != null) provider.addImages(images);
-                  },
+                  onTap: () => _openSelectImages(context),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
@@ -104,8 +102,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                       child: Icon(Icons.add, size: 40, color: Colors.grey),
                     ),
                   ),
-                );
-              }
+                );              }
             },
           ),
           const SizedBox(height: 16),
@@ -242,4 +239,22 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
     // TODO：根据业务进行生成、上传、写入数据库等
   }
+
+  Future<void> _openSelectImages(BuildContext context) async {
+    final provider = context.read<ImagePickerProvider>();
+    final List<String>? result = await Navigator.push<List<String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SelectImagesPage(
+          maxSelection: provider.maxImages,
+          preSelectedPaths: provider.pickedPaths,
+        ),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      provider.addSelected(result);
+    }
+  }
+
 }

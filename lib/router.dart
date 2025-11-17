@@ -1,44 +1,48 @@
 import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
 import 'pages/image_picker_page.dart';
+import 'pages/select_images_page.dart';
 
-/**
- * @description 全局路由管理，基于 Fluro 实现
- *
- * 使用方式：
- * 1. 在 main.dart 中调用 AppRouter.setupRouter() 完成初始化
- * 2. 使用 AppRouter.navigateTo(context, '/route_name') 进行跳转
- */
 class AppRouter {
   static final FluroRouter router = FluroRouter();
 
-  /// 初始化路由表
   static void setupRouter() {
+    // 主界面
     router.define(
-      '/image_picker',
+      '/',
       handler: Handler(handlerFunc: (_, __) => const ImagePickerPage()),
     );
 
-    /// 404 兜底
+    // 选择图片页面
+    router.define(
+      '/select_images',
+      handler: Handler(handlerFunc: (_, params) {
+        final pre = params['preSelected']?.first ?? '';
+        return SelectImagesPage(
+          preSelectedPaths: pre.isNotEmpty ? pre.split(',') : [],
+        );
+      }),
+    );
+
+    // 404 fallback
     router.notFoundHandler = Handler(
       handlerFunc: (_, __) => const Scaffold(
-        body: Center(
-          child: Text('页面不存在'),
-        ),
+        body: Center(child: Text('页面不存在')),
       ),
     );
   }
 
-  /// 简化跳转方法
   static Future navigateTo(
       BuildContext context,
       String path, {
+        Map<String, dynamic>? params,
         bool replace = false,
         bool clearStack = false,
       }) {
+    final query = params != null ? '?${Uri(queryParameters: params).query}' : '';
     return router.navigateTo(
       context,
-      path,
+      '$path$query',
       replace: replace,
       clearStack: clearStack,
       transition: TransitionType.inFromRight,

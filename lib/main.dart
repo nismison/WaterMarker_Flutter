@@ -21,7 +21,7 @@ class WatermarkApp extends StatelessWidget {
         title: '图片选择 Demo',
         theme: ThemeData(primarySwatch: Colors.blue),
         onGenerateRoute: AppRouter.router.generator,
-        initialRoute: '/image_picker',
+        initialRoute: '/',
       ),
     );
   }
