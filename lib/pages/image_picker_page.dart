@@ -2,9 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_code_tools/qr_code_tools.dart';
+import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/select_images_page.dart';
 import '../providers/image_picker_provider.dart';
-import '../router.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
 import '../widgets/user_picker_dialog.dart';
@@ -25,6 +26,61 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     if (images != null) provider.addImages(images);
   }
 
+  Future<void> _scanFromGallery() async {
+    final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file == null) return;
+
+    final result = await QrCodeToolsPlugin.decodeFrom(file.path);
+    if (!mounted) return;
+
+    if (result != null && result.trim().isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('解析成功: $result')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('未识别到二维码')),
+      );
+    }
+  }
+
+  Future<void> _scanWithCamera() async {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const QRScanPage(),
+      ),
+    );
+  }
+
+  void _showScanOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('从相册识别二维码'),
+              onTap: () {
+                Navigator.pop(context);
+                _scanFromGallery();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('打开相机扫描二维码'),
+              onTap: () {
+                Navigator.pop(context);
+                _scanWithCamera();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ImagePickerProvider>();
@@ -39,7 +95,21 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         .selectedTime.minute.toString().padLeft(2, '0')}";
 
     return Scaffold(
-      appBar: AppBar(title: const Text('选择图片')),
+      appBar: AppBar(
+        title: const Text('水印生成器'),
+        actions: [
+          TextButton(
+            onPressed: _showScanOptions,
+            child: const Text(
+              '解析二维码',
+              style: TextStyle(
+                color: Colors.blue,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
