@@ -28,139 +28,153 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     final provider = context.watch<ImagePickerProvider>();
 
     final dateText =
-        "${provider.selectedDate.year}-${provider.selectedDate.month.toString().padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(2, '0')}";
+        "${provider.selectedDate.year}-${provider.selectedDate.month
+        .toString()
+        .padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(
+        2, '0')}";
     final timeText =
-        "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
+        "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider
+        .selectedTime.minute.toString().padLeft(2, '0')}";
 
     return Scaffold(
       appBar: AppBar(title: const Text('选择图片')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // Grid
-          SizedBox(
-            height: 360,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount:
-                  provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 12,
-              ),
-              itemBuilder: (_, index) {
-                if (index < provider.pickedImages.length) {
-                  final img = provider.pickedImages[index];
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(File(img.path), fit: BoxFit.cover),
+          // 图片 Grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount:
+            provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1, // 1:1
+            ),
+            itemBuilder: (_, index) {
+              if (index < provider.pickedImages.length) {
+                final img = provider.pickedImages[index];
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: Image.file(File(img.path)),
+                        ),
                       ),
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: GestureDetector(
-                          onTap: () => provider.removeImage(index),
-                          child: const CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.black54,
-                            child: Icon(
-                              Icons.close,
-                              size: 14,
-                              color: Colors.white,
-                            ),
+                    ),
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: GestureDetector(
+                        onTap: () => provider.removeImage(index),
+                        child: const CircleAvatar(
+                          radius: 10,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                    ],
-                  );
-                } else {
-                  return GestureDetector(
-                    onTap: _pickImages,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade400),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.add, size: 40, color: Colors.grey),
-                      ),
                     ),
-                  );
-                }
-              },
-            ),
+                  ],
+                );
+              } else {
+                // 添加图片按钮
+                return GestureDetector(
+                  onTap: () async {
+                    final List<XFile>? images = await ImagePicker()
+                        .pickMultiImage();
+                    if (images != null) provider.addImages(images);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade400),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.add, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+            },
           ),
-
-          const SizedBox(height: 20),
-
-          // 日期选择
+          const SizedBox(height: 16),
+          // 日期
           _buildSelectorRow(
             icon: Icons.calendar_today,
             label: dateText,
-            onTap: () => showDatePickerDialog(
-              context: context,
-              initialDate: provider.selectedDate,
-              onSelected: provider.updateDate,
-            ),
+            onTap: () =>
+                showDatePickerDialog(
+                  context: context,
+                  initialDate: provider.selectedDate,
+                  onSelected: provider.updateDate,
+                ),
           ),
-
-          // 时间选择
+          // 时间
           _buildSelectorRow(
             icon: Icons.access_time,
             label: timeText,
-            onTap: () => showTimePickerDialog(
-              context: context,
-              initialTime: provider.selectedTime,
-              onSelected: provider.updateTime,
-            ),
+            onTap: () =>
+                showTimePickerDialog(
+                  context: context,
+                  initialTime: provider.selectedTime,
+                  onSelected: provider.updateTime,
+                ),
           ),
-
-          // 用户选择
+          // 用户
           _buildSelectorRow(
             icon: Icons.person,
             label: provider.selectedUserName,
-            onTap: () => showUserPickerDialog(
-              context: context,
-              userList: provider.userList,
-              initialName: provider.selectedUserName,
-              onSelected: provider.updateUser,
-            ),
-          ),
-
-          // 显示用户编号（禁用输入框），带图标且样式统一
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.grey.shade100,
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.badge, color: Colors.grey, size: 18),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    provider.selectedUserNumber,
-                    style: const TextStyle(fontSize: 15, color: Colors.black54),
-                  ),
+            onTap: () =>
+                showUserPickerDialog(
+                  context: context,
+                  userList: provider.userList,
+                  initialName: provider.selectedUserName,
+                  onSelected: provider.updateUser,
                 ),
-                // 不添加箭头，表明这是不可点击的（禁用表示）
-                const Icon(Icons.lock, color: Colors.grey, size: 16),
-              ],
-            ),
           ),
+          // 用户编号输入框
+          if (provider.selectedUser != null)
+            Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.grey.shade100,
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.badge, color: Colors.grey, size: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      provider.selectedUserNumber,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.lock, color: Colors.grey, size: 16),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 12),
           // 生成按钮
-          const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {
-              // 生成逻辑或回调处理
-              _handleGenerate(provider); // 下面有函数示例
-            },
+            onPressed: () => _handleGenerate(provider),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -173,6 +187,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             ),
             child: const Text('生成'),
           ),
+
           const SizedBox(height: 40),
         ],
       ),
