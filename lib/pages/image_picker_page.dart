@@ -154,6 +154,26 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               ],
             ),
           ),
+          // 生成按钮
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              // 生成逻辑或回调处理
+              _handleGenerate(provider); // 下面有函数示例
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            child: const Text('生成'),
+          ),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -184,5 +204,27 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         ),
       ),
     );
+  }
+
+  void _handleGenerate(ImagePickerProvider provider) {
+    if (provider.pickedImages.isEmpty) {
+      // 这里可以替换为 SnackBar / Toast
+      debugPrint("请先选择至少一张图片");
+      return;
+    }
+    if (provider.selectedUser == null) {
+      debugPrint("请先选择用户");
+      return;
+    }
+
+    final datetime = provider.combinedDateTime;
+    final userNumber = provider.selectedUserNumber;
+
+    debugPrint("开始生成...");
+    debugPrint("日期时间：$datetime");
+    debugPrint("用户编号：$userNumber");
+    debugPrint("共选择图片：${provider.pickedImages.length} 张");
+
+    // TODO：根据业务进行生成、上传、写入数据库等
   }
 }
