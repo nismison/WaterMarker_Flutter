@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/image_picker_provider.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
+import '../widgets/user_picker_dialog.dart';
 
 class ImagePickerPage extends StatefulWidget {
   const ImagePickerPage({super.key});
@@ -26,8 +27,10 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
   Widget build(BuildContext context) {
     final provider = context.watch<ImagePickerProvider>();
 
-    final dateText = "${provider.selectedDate.year}-${provider.selectedDate.month.toString().padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(2, '0')}";
-    final timeText = "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
+    final dateText =
+        "${provider.selectedDate.year}-${provider.selectedDate.month.toString().padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(2, '0')}";
+    final timeText =
+        "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
     return Scaffold(
       appBar: AppBar(title: const Text('选择图片')),
@@ -39,7 +42,8 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             height: 360,
             child: GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+              itemCount:
+                  provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 crossAxisSpacing: 8,
@@ -52,10 +56,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          File(img.path),
-                          fit: BoxFit.cover,
-                        ),
+                        child: Image.file(File(img.path), fit: BoxFit.cover),
                       ),
                       Positioned(
                         right: 4,
@@ -65,10 +66,14 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                           child: const CircleAvatar(
                             radius: 10,
                             backgroundColor: Colors.black54,
-                            child: Icon(Icons.close, size: 14, color: Colors.white),
+                            child: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   );
                 } else {
@@ -111,6 +116,42 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               context: context,
               initialTime: provider.selectedTime,
               onSelected: provider.updateTime,
+            ),
+          ),
+
+          // 用户选择
+          _buildSelectorRow(
+            icon: Icons.person,
+            label: provider.selectedUserName,
+            onTap: () => showUserPickerDialog(
+              context: context,
+              userList: provider.userList,
+              initialName: provider.selectedUserName,
+              onSelected: provider.updateUser,
+            ),
+          ),
+
+          // 显示用户编号（禁用输入框），带图标且样式统一
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.grey.shade100,
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.badge, color: Colors.grey, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    provider.selectedUserNumber,
+                    style: const TextStyle(fontSize: 15, color: Colors.black54),
+                  ),
+                ),
+                // 不添加箭头，表明这是不可点击的（禁用表示）
+                const Icon(Icons.lock, color: Colors.grey, size: 16),
+              ],
             ),
           ),
         ],

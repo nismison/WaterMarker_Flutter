@@ -12,6 +12,13 @@ class ImagePickerProvider extends ChangeNotifier {
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
 
+  // 用户选择
+  List<Map<String, dynamic>> userList = [
+    {"name": "黄光燃", "number": 2425430}, // 测试数据，后期可动态替换
+  ];
+
+  Map<String, dynamic>? selectedUser; // 当前选中的用户数据
+
   List<XFile> get pickedImages => List.unmodifiable(_pickedImages);
   bool get canAddMore => _pickedImages.length < maxImages;
 
@@ -44,4 +51,12 @@ class ImagePickerProvider extends ChangeNotifier {
       selectedTime.minute,
     );
   }
+
+  void updateUser(Map<String, dynamic> user) {
+    selectedUser = user;
+    notifyListeners();
+  }
+
+  String get selectedUserName => selectedUser?['name'] ?? "未选择";
+  String get selectedUserNumber => selectedUser?['number']?.toString() ?? "";
 }
