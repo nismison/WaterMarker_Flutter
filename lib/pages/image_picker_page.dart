@@ -9,7 +9,9 @@ import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/select_images_page.dart';
+import 'package:water_marker_test2/pages/watermark_preview_page.dart';
 import '../providers/image_picker_provider.dart';
+import '../utils/watermark/watermark_generator.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
 import '../widgets/user_picker_dialog.dart';
@@ -89,8 +91,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         "${provider.selectedDate.year}-${provider.selectedDate.month.toString().padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(2, '0')}";
     final timeText =
         "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
-
-
 
     return FScaffold(
       scaffoldStyle: FScaffoldStyle(
@@ -181,7 +181,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             children: [
               // 水印日期
               FTile(
-                prefix: const Icon(FIcons.calendar, size: 25,),
+                prefix: const Icon(FIcons.calendar, size: 25),
                 title: const Text('水印日期'),
                 details: Text(dateText),
                 suffix: const Icon(FIcons.chevronRight),
@@ -309,9 +309,8 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     );
   }
 
-  void _handleGenerate(ImagePickerProvider provider) {
+  void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
-      // 这里可以替换为 SnackBar / Toast
       debugPrint("请先选择至少一张图片");
       return;
     }
@@ -320,15 +319,47 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       return;
     }
 
-    final datetime = provider.combinedDateTime;
-    final userNumber = provider.selectedUserNumber;
+    final DateTime datetime = provider.combinedDateTime;
+    final String userNumber = provider.selectedUserNumber!;
+    // selectedUser 是 Map<String, dynamic>
+    final String name = (provider.selectedUser!['name'] ?? '').toString();
+    final List<String> watermarkedPaths = [];
 
     debugPrint("开始生成...");
-    debugPrint("日期时间：$datetime");
+    debugPrint("时间：$datetime");
     debugPrint("用户编号：$userNumber");
-    debugPrint("共选择图片：${provider.pickedImages.length} 张");
+    debugPrint("选择图片数：${provider.pickedImages.length}");
 
-    // TODO：根据业务进行生成、上传、写入数据库等
+    for (int i = 0; i < provider.pickedImages.length; i++) {
+      final XFile xfile = provider.pickedImages[i];
+      final File inputFile = File(xfile.path);
+
+      try {
+        final String watermarkedPath = await generateWatermarkForImage(
+          inputFile: inputFile,
+          name: name,
+          userNumber: userNumber,
+          datetime: datetime,
+          minuteOffset: i * 2,
+        );
+        watermarkedPaths.add(watermarkedPath);
+        debugPrint("第 ${i + 1} 张生成完成：$watermarkedPath");
+      } catch (e, st) {
+        debugPrint("第 ${i + 1} 张生成失败: $e");
+        debugPrint(st.toString());
+      }
+    }
+
+    debugPrint("全部图片生成完成");
+    // 跳转预览页面
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => WatermarkPreviewPage(imagePaths: watermarkedPaths),
+        ),
+      );
+    }
   }
 
   Future<void> _openSelectImages(BuildContext context) async {

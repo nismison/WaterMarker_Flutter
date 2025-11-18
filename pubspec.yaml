@@ -45,6 +45,13 @@ dependencies:
   qr_code_tools: ^0.2.0  # 从相册图片识别二维码
   forui: ^0.16.0  # ForUI库
 
+  # 加密用
+  crypto: ^3.0.5
+  encrypt: ^5.0.1
+  json_annotation: ^4.8.1
+  qr_flutter: ^4.1.0
+  image: ^4.1.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
