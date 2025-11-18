@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:flutter/cupertino.dart';
 
 /// 固定 AES 密钥，必须 16 字节
 const String AES_KEY = 'e373d090928170eb';
@@ -20,15 +21,17 @@ const Map<String, double> COORD_RANGE = {
 /// 生成随机坐标
 Map<String, dynamic> generateRandomCoordinates() {
   final rand = Random();
-  final lat = COORD_RANGE["lat_min"]! +
+  final lat =
+      COORD_RANGE["lat_min"]! +
       rand.nextDouble() * (COORD_RANGE["lat_max"]! - COORD_RANGE["lat_min"]!);
-  final lon = COORD_RANGE["lon_min"]! +
+  final lon =
+      COORD_RANGE["lon_min"]! +
       rand.nextDouble() * (COORD_RANGE["lon_max"]! - COORD_RANGE["lon_min"]!);
   return {
     "c": "GCJ-02",
     "la": double.parse(lat.toStringAsFixed(6)),
     "lo": double.parse(lon.toStringAsFixed(6)),
-    "n": ""
+    "n": "",
   };
 }
 
@@ -39,18 +42,17 @@ Map<String, dynamic> createWatermarkData({
   required String n,
   bool useRandomCoords = true,
 }) {
-  return {
-    "g": useRandomCoords ? generateRandomCoordinates() : {
-      "c": "GCJ-02",
-      "la": 22.764439,
-      "lo": 108.432947,
-      "n": ""
-    },
+  final data = {
+    "g": useRandomCoords
+        ? generateRandomCoordinates()
+        : {"c": "GCJ-02", "la": 22.764439, "lo": 108.432947, "n": ""},
     "n": n,
     "or": FIXED_OR,
     "ot": timestamp,
-    "s": s
+    "s": s,
   };
+  debugPrint(jsonEncode(data));
+  return data;
 }
 
 /// AES-128-ECB + PKCS7

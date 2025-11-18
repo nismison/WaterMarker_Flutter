@@ -1,10 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-/**
- * @description 管理全局图片选择与统一时间、日期
- */
+/// @description 管理全局图片选择与统一时间、日期
 class ImagePickerProvider extends ChangeNotifier {
   final List<XFile> _pickedImages = [];
   final int maxImages = 9;

@@ -250,57 +250,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     );
   }
 
-  Widget _buildSelectorRow({
-    required IconData icon,
-    required String label,
-    required String title,
-    required bool locked,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 这是标题，不放在 GestureDetector 内，不会触发 onTap
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 6),
-        // 只有这行可点击
-        GestureDetector(
-          onTap: locked ? null : onTap,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300),
-              color: locked ? Colors.grey.shade100 : Colors.white,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.grey, size: 18),
-                const SizedBox(width: 12),
-                Text(label, style: const TextStyle(fontSize: 15)),
-                const Spacer(),
-                Icon(
-                  locked ? FIcons.lockKeyhole : FIcons.arrowRight,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
       debugPrint("请先选择至少一张图片");
@@ -312,7 +261,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     }
 
     final DateTime datetime = provider.combinedDateTime;
-    final String userNumber = provider.selectedUserNumber!;
+    final String userNumber = provider.selectedUserNumber;
     // selectedUser 是 Map<String, dynamic>
     final String name = (provider.selectedUser!['name'] ?? '').toString();
     final List<String> watermarkedPaths = [];

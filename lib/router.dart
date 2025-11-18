@@ -10,7 +10,7 @@ class AppRouter {
     // 主界面
     router.define(
       '/',
-      handler: Handler(handlerFunc: (_, __) => const ImagePickerPage()),
+      handler: Handler(handlerFunc: (_, _) => const ImagePickerPage()),
     );
 
     // 选择图片页面
@@ -26,7 +26,7 @@ class AppRouter {
 
     // 404 fallback
     router.notFoundHandler = Handler(
-      handlerFunc: (_, __) => const Scaffold(
+      handlerFunc: (_, _) => const Scaffold(
         body: Center(child: Text('页面不存在')),
       ),
     );

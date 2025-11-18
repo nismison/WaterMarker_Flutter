@@ -120,14 +120,14 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
         // 标题用 ValueListenableBuilder 包裹，只更新标题文本
         title: ValueListenableBuilder<Set<String>>(
           valueListenable: _selectedIds,
-          builder: (_, selected, __) {
+          builder: (_, selected, _) {
             return Text('选择图片 (${selected.length}/${widget.maxSelection})');
           },
         ),
         actions: [
           ValueListenableBuilder<Set<String>>(
             valueListenable: _selectedIds,
-            builder: (_, selected, __) {
+            builder: (_, selected, _) {
               if (selected.isEmpty) {
                 return const SizedBox.shrink();
               }

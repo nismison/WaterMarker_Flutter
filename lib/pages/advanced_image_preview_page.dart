@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
@@ -30,13 +31,13 @@ Future<void> showImagePreview(
     context,
     PageRouteBuilder(
       opaque: false,
-      pageBuilder: (_, __, ___) => AdvancedImagePreviewPage(
+      pageBuilder: (_, _, _) => AdvancedImagePreviewPage(
         imageList: imageList,
         imagePath: imagePath,
         initialIndex: initialIndex,
         useHero: useHero,
       ),
-      transitionsBuilder: (_, animation, __, child) {
+      transitionsBuilder: (_, animation, _, child) {
         return FadeTransition(
           opacity: animation,
           child: child,
@@ -126,7 +127,7 @@ class _AdvancedImagePreviewPageState extends State<AdvancedImagePreviewPage>
         final double dy = offset.dy.abs();
         final double h = pageSize.height;
         final double opacity = (1.0 - dy / (h * 0.7)).clamp(0.0, 1.0);
-        return Colors.black.withOpacity(opacity);
+        return ui.Color.fromRGBO(0, 0, 0, opacity);
       },
       child: Scaffold(
         backgroundColor: Colors.transparent,
