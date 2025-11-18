@@ -1,6 +1,7 @@
 import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
@@ -92,6 +93,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('水印生成器'),
+        backgroundColor: Colors.white,
         actions: [
           TextButton(
             onPressed: _showScanOptions,
@@ -102,137 +104,140 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(12),
-        children: [
-          // 图片 Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount:
-                provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1, // 1:1
-            ),
-            itemBuilder: (_, index) {
-              if (index < provider.pickedImages.length) {
-                final img = provider.pickedImages[index];
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: Image.file(File(img.path)),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: GestureDetector(
-                        onTap: () => provider.removeImage(index),
-                        child: const CircleAvatar(
-                          radius: 10,
-                          backgroundColor: Colors.black54,
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Colors.white,
+      body: Container(
+        decoration: const BoxDecoration(color: Color(0xffF8F8F8)),
+        child: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            // 图片 Grid
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount:
+                  provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1, // 1:1
+              ),
+              itemBuilder: (_, index) {
+                if (index < provider.pickedImages.length) {
+                  final img = provider.pickedImages[index];
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            child: Image.file(File(img.path)),
                           ),
                         ),
                       ),
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: GestureDetector(
+                          onTap: () => provider.removeImage(index),
+                          child: const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.black54,
+                            child: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // 添加图片按钮
+                  return GestureDetector(
+                    onTap: () => _openSelectImages(context),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.add, size: 40, color: Colors.grey),
+                      ),
                     ),
-                  ],
-                );
-              } else {
-                // 添加图片按钮
-                return GestureDetector(
-                  onTap: () => _openSelectImages(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.add, size: 40, color: Colors.grey),
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-          const SizedBox(height: 16),
-          // 日期
-          _buildSelectorRow(
-            icon: Icons.calendar_today,
-            title: '水印日期',
-            label: dateText,
-            locked: false,
-            onTap: () => showDatePickerDialog(
-              context: context,
-              initialDate: provider.selectedDate,
-              onSelected: provider.updateDate,
+                  );
+                }
+              },
             ),
-          ),
-          // 时间
-          _buildSelectorRow(
-            icon: Icons.access_time,
-            title: '水印时间',
-            label: timeText,
-            locked: false,
-            onTap: () => showTimePickerDialog(
-              context: context,
-              initialTime: provider.selectedTime,
-              onSelected: provider.updateTime,
-            ),
-          ),
-          // 用户
-          _buildSelectorRow(
-            icon: Icons.person,
-            title: '姓名',
-            label: provider.selectedUserName,
-            locked: false,
-            onTap: () => showUserPickerDialog(
-              context: context,
-              userList: provider.userList,
-              initialName: provider.selectedUserName,
-              onSelected: provider.updateUser,
-            ),
-          ),
-          // 用户编号输入框
-          _buildSelectorRow(
-            icon: Icons.badge,
-            title: '用户编号',
-            label: provider.selectedUserNumber,
-            locked: true,
-            onTap: () => {},
-          ),
-
-          const SizedBox(height: 12),
-          // 生成按钮
-          ElevatedButton(
-            onPressed: () => _handleGenerate(provider),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 16),
+            // 日期
+            _buildSelectorRow(
+              icon: Icons.calendar_today,
+              title: '水印日期',
+              label: dateText,
+              locked: false,
+              onTap: () => showDatePickerDialog(
+                context: context,
+                initialDate: provider.selectedDate,
+                onSelected: provider.updateDate,
               ),
             ),
-            child: const Text('生成'),
-          ),
+            // 时间
+            _buildSelectorRow(
+              icon: Icons.access_time,
+              title: '水印时间',
+              label: timeText,
+              locked: false,
+              onTap: () => showTimePickerDialog(
+                context: context,
+                initialTime: provider.selectedTime,
+                onSelected: provider.updateTime,
+              ),
+            ),
+            // 用户
+            _buildSelectorRow(
+              icon: Icons.person,
+              title: '姓名',
+              label: provider.selectedUserName,
+              locked: false,
+              onTap: () => showUserPickerDialog(
+                context: context,
+                userList: provider.userList,
+                initialName: provider.selectedUserName,
+                onSelected: provider.updateUser,
+              ),
+            ),
+            // 用户编号输入框
+            _buildSelectorRow(
+              icon: Icons.badge,
+              title: '用户编号',
+              label: provider.selectedUserNumber,
+              locked: true,
+              onTap: () => {},
+            ),
 
-          const SizedBox(height: 40),
-        ],
+            const SizedBox(height: 12),
+            // 生成按钮
+            ElevatedButton(
+              onPressed: () => _handleGenerate(provider),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: const Text('生成'),
+            ),
+
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
