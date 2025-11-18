@@ -1,129 +1,191 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
 
-/**
- * @description 日期选择弹窗：年月日，滚轮选择，选中项有半透明蓝色背景
- *
- * @param context 上下文
- * @param initialDate 初始日期
- * @param onSelected 选择完成回调
- */
+import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
+
+/// @description 日期选择弹窗：多列年/月/日滚轮选择，选中项有高亮背景
+///
+/// @param context 上下文
+/// @param initialDate 初始日期
+/// @param onSelected 选择完成回调
 void showDatePickerDialog({
   required BuildContext context,
   required DateTime initialDate,
   required ValueChanged<DateTime> onSelected,
 }) {
-  // 生成未来 365 天的日期列表（可按需调整）
-  final List<DateTime> dateList = List.generate(
-    365,
-        (i) {
-      final now = DateTime.now();
-      return DateTime(now.year, now.month, now.day).add(Duration(days: i));
-    },
+  final now = DateTime.now();
+
+  // 年：当前年起，往后 3 年（共 4 年）
+  final List<int> years = List.generate(4, (i) => now.year + i);
+  // 月：1 - 12
+  final List<int> months = List.generate(12, (i) => i + 1);
+  // 日：固定 1 - 31，真正生成日期时再按当月实际天数裁剪
+  final List<int> days = List.generate(31, (i) => i + 1);
+
+  int yearIndex = years.indexOf(initialDate.year);
+  if (yearIndex < 0) yearIndex = 0;
+
+  int monthIndex = (initialDate.month - 1).clamp(0, months.length - 1);
+  int dayIndex = (initialDate.day - 1).clamp(0, days.length - 1);
+
+  final FPickerController controller = FPickerController(
+    initialIndexes: <int>[yearIndex, monthIndex, dayIndex],
   );
 
-  // 找到初始日期所在下标，不存在就用 0
-  int initialIndex = dateList.indexWhere((d) =>
-  d.year == initialDate.year &&
-      d.month == initialDate.month &&
-      d.day == initialDate.day);
-  if (initialIndex < 0) {
-    initialIndex = 0;
-  }
+  int selectedYear = years[yearIndex];
+  int selectedMonth = months[monthIndex];
+  int selectedDay = days[dayIndex];
 
-  DateTime tempDate = dateList[initialIndex];
-  int currentIndex = initialIndex;
-
-  final FixedExtentScrollController controller =
-  FixedExtentScrollController(initialItem: initialIndex);
-
-  showModalBottomSheet(
+  showFSheet(
     context: context,
-    isScrollControlled: false,
-    builder: (ctx) {
+    side: FLayout.btt,
+    style: context.theme.modalSheetStyle
+        .copyWith(
+          barrierFilter: (animation) => ImageFilter.compose(
+            outer: ImageFilter.blur(
+              sigmaX: animation * 5,
+              sigmaY: animation * 5,
+            ),
+            inner: ColorFilter.mode(
+              context.theme.colors.barrier,
+              BlendMode.srcOver,
+            ),
+          ),
+        )
+        .call,
+    builder: (_) {
       return Container(
-        height: 280,
+        height: 320,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        child: StatefulBuilder(
-          builder: (context, setState) {
-            return Column(
+        child: Column(
+          children: [
+            Row(
               children: [
-                const Text(
-                  '选择日期',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // 选中项的半透明蓝色背景条
-                      Container(
-                        height: 36,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      ListWheelScrollView.useDelegate(
-                        controller: controller,
-                        itemExtent: 36,
-                        perspective: 0.002,
-                        physics: const FixedExtentScrollPhysics(), // 强制停在选项上
-                        overAndUnderCenterOpacity: 0.3,
-                        onSelectedItemChanged: (index) {
-                          if (index < 0 || index >= dateList.length) {
-                            return;
-                          }
-                          setState(() {
-                            currentIndex = index;
-                            tempDate = dateList[index];
-                          });
-                        },
-                        childDelegate: ListWheelChildBuilderDelegate(
-                          builder: (_, index) {
-                            if (index < 0 || index >= dateList.length) {
-                              return null; // 一定要防御负数和越界
-                            }
-                            final d = dateList[index];
-                            final label =
-                                "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
-                            final bool isSelected = index == currentIndex;
-                            return Center(
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: isSelected
-                                      ? Colors.blue
-                                      : Colors.black87,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
+                TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    onSelected(tempDate);
                   },
-                  child: const Text('确定'),
+                  child: Text(
+                    '取消',
+                    style: TextStyle(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    // 根据选中的年/月，计算该月的实际天数
+                    final int maxDay = DateTime(
+                      selectedYear,
+                      selectedMonth + 1,
+                      0,
+                    ).day;
+                    final int finalDay = selectedDay > maxDay
+                        ? maxDay
+                        : selectedDay;
+
+                    Navigator.pop(context);
+                    onSelected(DateTime(selectedYear, selectedMonth, finalDay));
+                  },
+                  child: Text(
+                    '确定',
+                    style: TextStyle(
+                      color: context.theme.colors.primaryForeground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
-            );
-          },
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: FPicker(
+                controller: controller,
+                style: FPickerStyle(
+                  focusedOutlineStyle: FFocusedOutlineStyle(
+                    color: Colors.transparent, // 完全透明颜色，效果等同于无边框
+                    width: 0.0001, // 宽度不能为 0，给一个极小的值即可绕过断言
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                  selectionBorderRadius: BorderRadius.circular(8),
+                  selectionHeightAdjustment: 20,
+                  selectionColor: const Color.fromARGB(
+                    30,
+                    33,
+                    150,
+                    243,
+                  ), // 选中区域半透明蓝色
+                ).call,
+                onChange: (List<int> indexes) {
+                  // indexes 顺序：年 / 月 / 日
+                  selectedYear = years[indexes[0]];
+                  selectedMonth = months[indexes[1]];
+                  selectedDay = days[indexes[2]];
+                },
+                children: [
+                  // 年列
+                  FPickerWheel(
+                    flex: 1,
+                    loop: false,
+                    itemExtent: 36,
+                    children: years
+                        .map(
+                          (y) => Center(
+                            child: Text(
+                              '$y年',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+
+                  // 月列
+                  FPickerWheel(
+                    flex: 1,
+                    loop: false,
+                    itemExtent: 36,
+                    children: months
+                        .map(
+                          (m) => Center(
+                            child: Text(
+                              '$m月',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+
+                  // 日列（1-31）
+                  FPickerWheel(
+                    flex: 1,
+                    loop: false,
+                    itemExtent: 36,
+                    children: days
+                        .map(
+                          (d) => Center(
+                            child: Text(
+                              '$d日',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       );
     },

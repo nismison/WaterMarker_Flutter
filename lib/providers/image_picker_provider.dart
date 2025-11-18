@@ -15,6 +15,9 @@ class ImagePickerProvider extends ChangeNotifier {
   // 用户选择
   List<Map<String, dynamic>> userList = [
     {"name": "黄光燃", "number": 2425430}, // 测试数据，后期可动态替换
+    {"name": "梁振卓", "number": 2409840},
+    {"name": "测试用户", "number": 3311223},
+    {"name": "测试用户2", "number": 7744224},
   ];
 
   Map<String, dynamic>? selectedUser; // 当前选中的用户数据

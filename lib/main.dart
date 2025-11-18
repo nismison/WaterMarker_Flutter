@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
 import 'router.dart';
 import 'providers/image_picker_provider.dart';
@@ -13,13 +14,16 @@ class WatermarkApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FThemes.zinc.dark;
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ImagePickerProvider()),
       ],
       child: MaterialApp(
         title: '图片选择 Demo',
-        theme: ThemeData(primarySwatch: Colors.blue),
+        theme: theme.toApproximateMaterialTheme(),
+        builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
         onGenerateRoute: AppRouter.router.generator,
         initialRoute: '/',
       ),

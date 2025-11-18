@@ -43,6 +43,7 @@ dependencies:
   photo_manager: ^3.0.0
   mobile_scanner: ^3.5.0  # 二维码扫描
   qr_code_tools: ^0.2.0  # 从相册图片识别二维码
+  forui: ^0.16.0  # ForUI库
 
 dev_dependencies:
   flutter_test:
