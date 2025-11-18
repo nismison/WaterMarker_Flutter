@@ -16,7 +16,7 @@
     <application
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:label="water_marker_test2"
+        android:label="水印生成器2.0"
         android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
