@@ -9,6 +9,7 @@ import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/select_images_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
 import '../providers/image_picker_provider.dart';
+import '../utils/loading_manager.dart';
 import '../utils/watermark/watermark_generator.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
@@ -266,12 +267,16 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     final String name = (provider.selectedUser!['name'] ?? '').toString();
     final List<String> watermarkedPaths = [];
 
+    final loading = GlobalLoading();
+    loading.show(context, text: "开始生成...");
+
     debugPrint("开始生成...");
     debugPrint("时间：$datetime");
     debugPrint("用户编号：$userNumber");
     debugPrint("选择图片数：${provider.pickedImages.length}");
 
     for (int i = 0; i < provider.pickedImages.length; i++) {
+      loading.update("正在生成(${i + 1}/${provider.pickedImages.length})");
       final XFile xfile = provider.pickedImages[i];
       final File inputFile = File(xfile.path);
 
@@ -291,6 +296,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       }
     }
 
+    loading.hide();
     debugPrint("全部图片生成完成");
     // 跳转预览页面
     if (context.mounted) {
