@@ -42,10 +42,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           FTile(
             prefix: Icon(FIcons.image),
             title: const Text('从相册识别二维码'),
-            // onPress: () {
-            //   Navigator.pop(context);
-            //   _scanFromGallery();
-            // },
             onPress: () async {
               Navigator.pop(context);
               final selectedPaths = await showImagePicker(
@@ -65,7 +61,10 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               if (result != null && result.trim().isNotEmpty) {
                 final decrypted = decryptWatermark(jsonDecode(result)['text']);
                 if (decrypted == null) {
-                  debugPrint("解密失败");
+                  Fluttertoast.showToast(
+                    msg: "解密失败",
+                    backgroundColor: Colors.red,
+                  );
                   return;
                 }
 
@@ -307,11 +306,11 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
   void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
-      debugPrint("请先选择至少一张图片");
+      Fluttertoast.showToast(msg: "请先选择至少一张图片", backgroundColor: Colors.red);
       return;
     }
     if (provider.selectedUser == null) {
-      debugPrint("请先选择用户");
+      Fluttertoast.showToast(msg: "请先选择用户", backgroundColor: Colors.red);
       return;
     }
 
