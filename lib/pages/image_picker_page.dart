@@ -1,6 +1,4 @@
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
@@ -15,6 +13,8 @@ import '../utils/watermark/watermark_generator.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
 import '../widgets/user_picker_dialog.dart';
+import 'advanced_image_preview_page.dart';
+import 'image_preview_page.dart';
 
 class ImagePickerPage extends StatefulWidget {
   const ImagePickerPage({super.key});
@@ -25,12 +25,6 @@ class ImagePickerPage extends StatefulWidget {
 
 class _ImagePickerPageState extends State<ImagePickerPage> {
   final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImages() async {
-    final provider = context.read<ImagePickerProvider>();
-    final List<XFile>? images = await _picker.pickMultiImage();
-    if (images != null) provider.addImages(images);
-  }
 
   Future<void> _scanFromGallery() async {
     final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
@@ -133,9 +127,23 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                       borderRadius: BorderRadius.circular(5),
                       child: AspectRatio(
                         aspectRatio: 1,
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: Image.file(File(img.path)),
+                        child: GestureDetector(
+                          child: Hero(
+                            tag: img.path,
+                            child: Image.file(
+                              File(img.path),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          onTap: () {
+                            showImagePreview(
+                              context,
+                              imagePath: img.path,
+                              useHero: true,
+                              fadeDuration: Duration(milliseconds: 150),
+                              imageList: provider.pickedImages.map((e) => e.path).toList(),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -237,21 +245,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             onPress: () => _handleGenerate(provider),
             child: const Text('生成'),
           ),
-
-          // ElevatedButton(
-          //   onPressed: () => _handleGenerate(provider),
-          //   style: ElevatedButton.styleFrom(
-          //     padding: const EdgeInsets.symmetric(vertical: 14),
-          //     shape: RoundedRectangleBorder(
-          //       borderRadius: BorderRadius.circular(10),
-          //     ),
-          //     textStyle: const TextStyle(
-          //       fontSize: 16,
-          //       fontWeight: FontWeight.bold,
-          //     ),
-          //   ),
-          //   child: const Text('生成'),
-          // ),
           const SizedBox(height: 40),
         ],
       ),

@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'advanced_image_preview_page.dart';
+import 'image_preview_page.dart';
+
 class WatermarkPreviewPage extends StatelessWidget {
   final List<String> imagePaths;
 
-  const WatermarkPreviewPage({
-    super.key,
-    required this.imagePaths,
-  });
+  const WatermarkPreviewPage({super.key, required this.imagePaths});
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +27,9 @@ class WatermarkPreviewPage extends StatelessWidget {
           IconButton(
             onPressed: () {
               // 可扩展批量上传、保存操作
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("批量上传功能未实现")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text("批量上传功能未实现")));
             },
             icon: const Icon(Icons.cloud_upload),
           ),
@@ -46,13 +46,18 @@ class WatermarkPreviewPage extends StatelessWidget {
         itemBuilder: (_, i) {
           final path = imagePaths[i];
           return GestureDetector(
-            onTap: () => _showPreview(context, path),
+            onTap: () => {
+              showImagePreview(
+                context,
+                imagePath: path,
+                useHero: true,
+                fadeDuration: Duration(milliseconds: 150),
+                imageList: imagePaths,
+              ),
+            },
             child: Hero(
               tag: path,
-              child: Image.file(
-                File(path),
-                fit: BoxFit.cover,
-              ),
+              child: Image.file(File(path), fit: BoxFit.cover),
             ),
           );
         },
@@ -64,36 +69,10 @@ class WatermarkPreviewPage extends StatelessWidget {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => _FullImageView(imagePath: path),
+        pageBuilder: (_, __, ___) => ImagePreviewPage(imagePath: path),
         transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
-      ),
-    );
-  }
-}
-
-class _FullImageView extends StatelessWidget {
-  final String imagePath;
-
-  const _FullImageView({required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text("预览"),
-      ),
-      body: Center(
-        child: Hero(
-          tag: imagePath,
-          child: Image.file(File(imagePath)),
-        ),
       ),
     );
   }
