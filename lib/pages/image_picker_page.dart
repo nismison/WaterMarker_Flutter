@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -172,6 +173,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             icon: Icons.calendar_today,
             title: '水印日期',
             label: dateText,
+            locked: false,
             onTap: () => showDatePickerDialog(
               context: context,
               initialDate: provider.selectedDate,
@@ -183,6 +185,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             icon: Icons.access_time,
             title: '水印时间',
             label: timeText,
+            locked: false,
             onTap: () => showTimePickerDialog(
               context: context,
               initialTime: provider.selectedTime,
@@ -194,6 +197,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             icon: Icons.person,
             title: '姓名',
             label: provider.selectedUserName,
+            locked: false,
             onTap: () => showUserPickerDialog(
               context: context,
               userList: provider.userList,
@@ -202,26 +206,12 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             ),
           ),
           // 用户编号输入框
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(10),
-              color: Colors.grey.shade100,
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.badge, color: Colors.grey, size: 18),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    provider.selectedUserNumber,
-                    style: const TextStyle(fontSize: 15, color: Colors.black54),
-                  ),
-                ),
-                const Icon(Icons.lock, color: Colors.grey, size: 16),
-              ],
-            ),
+          _buildSelectorRow(
+            icon: Icons.badge,
+            title: '用户编号',
+            label: provider.selectedUserNumber,
+            locked: true,
+            onTap: () => {},
           ),
 
           const SizedBox(height: 12),
@@ -251,6 +241,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     required IconData icon,
     required String label,
     required String title,
+    required bool locked,
     required VoidCallback onTap,
   }) {
     return Column(
@@ -269,13 +260,14 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
         // 只有这行可点击
         GestureDetector(
-          onTap: onTap,
+          onTap: locked ? null : onTap,
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.grey.shade300),
+              color: locked ? Colors.grey.shade100 : Colors.white,
             ),
             child: Row(
               children: [
@@ -283,8 +275,8 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 const SizedBox(width: 12),
                 Text(label, style: const TextStyle(fontSize: 15)),
                 const Spacer(),
-                const Icon(
-                  Icons.arrow_forward_ios,
+                Icon(
+                  locked ? Icons.lock : Icons.arrow_forward_ios,
                   size: 16,
                   color: Colors.grey,
                 ),
