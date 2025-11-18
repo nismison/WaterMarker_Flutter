@@ -132,7 +132,18 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         footerDecoration: BoxDecoration(),
       ).call,
       header: FHeader(
-        title: const Text('水印生成器'),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset('assets/icons/appicon.png', width: 30, height: 30),
+            const SizedBox(width: 8),
+            const Baseline(
+              baseline: 30,
+              baselineType: TextBaseline.alphabetic,
+              child: Text('水印生成器2.0'),
+            ),
+          ],
+        ),
         suffixes: [
           FHeaderAction(
             icon: const Icon(FIcons.scanQrCode, size: 30),

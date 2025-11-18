@@ -90,6 +90,7 @@ flutter:
   assets:
     - assets/fonts/siyuansongti.ttf
     - assets/icons/location_icon.png
+    - assets/icons/appicon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
