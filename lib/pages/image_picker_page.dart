@@ -34,22 +34,20 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     if (!mounted) return;
 
     if (result != null && result.trim().isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('解析成功: $result')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('解析成功: $result')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未识别到二维码')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('未识别到二维码')));
     }
   }
 
   Future<void> _scanWithCamera() async {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const QRScanPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const QRScanPage()));
   }
 
   void _showScanOptions() {
@@ -86,13 +84,9 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     final provider = context.watch<ImagePickerProvider>();
 
     final dateText =
-        "${provider.selectedDate.year}-${provider.selectedDate.month
-        .toString()
-        .padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(
-        2, '0')}";
+        "${provider.selectedDate.year}-${provider.selectedDate.month.toString().padLeft(2, '0')}-${provider.selectedDate.day.toString().padLeft(2, '0')}";
     final timeText =
-        "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider
-        .selectedTime.minute.toString().padLeft(2, '0')}";
+        "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
     return Scaffold(
       appBar: AppBar(
@@ -102,10 +96,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             onPressed: _showScanOptions,
             child: const Text(
               '解析二维码',
-              style: TextStyle(
-                color: Colors.blue,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.blue, fontSize: 16),
             ),
           ),
         ],
@@ -118,7 +109,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount:
-            provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+                provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               mainAxisSpacing: 12,
@@ -171,70 +162,67 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                       child: Icon(Icons.add, size: 40, color: Colors.grey),
                     ),
                   ),
-                );              }
+                );
+              }
             },
           ),
           const SizedBox(height: 16),
           // 日期
           _buildSelectorRow(
             icon: Icons.calendar_today,
+            title: '水印日期',
             label: dateText,
-            onTap: () =>
-                showDatePickerDialog(
-                  context: context,
-                  initialDate: provider.selectedDate,
-                  onSelected: provider.updateDate,
-                ),
+            onTap: () => showDatePickerDialog(
+              context: context,
+              initialDate: provider.selectedDate,
+              onSelected: provider.updateDate,
+            ),
           ),
           // 时间
           _buildSelectorRow(
             icon: Icons.access_time,
+            title: '水印时间',
             label: timeText,
-            onTap: () =>
-                showTimePickerDialog(
-                  context: context,
-                  initialTime: provider.selectedTime,
-                  onSelected: provider.updateTime,
-                ),
+            onTap: () => showTimePickerDialog(
+              context: context,
+              initialTime: provider.selectedTime,
+              onSelected: provider.updateTime,
+            ),
           ),
           // 用户
           _buildSelectorRow(
             icon: Icons.person,
+            title: '姓名',
             label: provider.selectedUserName,
-            onTap: () =>
-                showUserPickerDialog(
-                  context: context,
-                  userList: provider.userList,
-                  initialName: provider.selectedUserName,
-                  onSelected: provider.updateUser,
-                ),
+            onTap: () => showUserPickerDialog(
+              context: context,
+              userList: provider.userList,
+              initialName: provider.selectedUserName,
+              onSelected: provider.updateUser,
+            ),
           ),
           // 用户编号输入框
-          if (provider.selectedUser != null)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.grey.shade100,
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.badge, color: Colors.grey, size: 18),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      provider.selectedUserNumber,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ),
-                  const Icon(Icons.lock, color: Colors.grey, size: 16),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.grey.shade100,
             ),
+            child: Row(
+              children: [
+                const Icon(Icons.badge, color: Colors.grey, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    provider.selectedUserNumber,
+                    style: const TextStyle(fontSize: 15, color: Colors.black54),
+                  ),
+                ),
+                const Icon(Icons.lock, color: Colors.grey, size: 16),
+              ],
+            ),
+          ),
 
           const SizedBox(height: 12),
           // 生成按钮
@@ -262,27 +250,49 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
   Widget _buildSelectorRow({
     required IconData icon,
     required String label,
+    required String title,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade300),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 这是标题，不放在 GestureDetector 内，不会触发 onTap
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.grey, size: 18),
-            const SizedBox(width: 12),
-            Text(label, style: const TextStyle(fontSize: 15)),
-            const Spacer(),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
+        const SizedBox(height: 6),
+
+        // 只有这行可点击
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.grey, size: 18),
+                const SizedBox(width: 12),
+                Text(label, style: const TextStyle(fontSize: 15)),
+                const Spacer(),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -324,5 +334,4 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       provider.addSelected(result);
     }
   }
-
 }
