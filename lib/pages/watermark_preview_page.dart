@@ -1,10 +1,8 @@
-// lib/pages/watermark_preview_page.dart
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'advanced_image_preview_page.dart';
-import 'image_preview_page.dart';
 
 class WatermarkPreviewPage extends StatelessWidget {
   final List<String> imagePaths;
@@ -60,18 +58,6 @@ class WatermarkPreviewPage extends StatelessWidget {
               child: Image.file(File(path), fit: BoxFit.cover),
             ),
           );
-        },
-      ),
-    );
-  }
-
-  void _showPreview(BuildContext context, String path) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => ImagePreviewPage(imagePath: path),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(opacity: animation, child: child);
         },
       ),
     );
