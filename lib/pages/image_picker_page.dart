@@ -243,7 +243,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             children: [
               // 水印日期
               FTile(
-                prefix: const Icon(FIcons.calendar, size: 25),
+                prefix: const Text('📅'),
                 title: const Text('水印日期'),
                 details: Text(dateText),
                 suffix: const Icon(FIcons.chevronRight),
@@ -256,7 +256,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
               // 水印时间
               FTile(
-                prefix: const Icon(FIcons.alarmClock),
+                prefix: const Text('🕐'),
                 title: const Text('水印时间'),
                 details: Text(timeText),
                 suffix: const Icon(FIcons.chevronRight),
@@ -269,7 +269,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
               // 用户姓名
               FTile(
-                prefix: const Icon(FIcons.circleUserRound),
+                prefix: const Text('👤'),
                 title: const Text('姓名'),
                 details: Text(provider.selectedUserName),
                 suffix: const Icon(FIcons.chevronRight),
