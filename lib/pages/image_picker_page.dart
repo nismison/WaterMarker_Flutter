@@ -1,7 +1,9 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
@@ -53,30 +55,28 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
   }
 
   void _showScanOptions() {
-    showModalBottomSheet(
+    showFSheet(
       context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('从相册识别二维码'),
-              onTap: () {
-                Navigator.pop(context);
-                _scanFromGallery();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('打开相机扫描二维码'),
-              onTap: () {
-                Navigator.pop(context);
-                _scanWithCamera();
-              },
-            ),
-          ],
-        ),
+      side: FLayout.btt,
+      builder: (_) => FTileGroup(
+        children: [
+          FTile(
+            prefix: Icon(FIcons.image),
+            title: const Text('从相册识别二维码'),
+            onPress: () {
+              Navigator.pop(context);
+              _scanFromGallery();
+            },
+          ),
+          FTile(
+            prefix: Icon(FIcons.image),
+            title: const Text('打开相机扫描二维码'),
+            onPress: () {
+              Navigator.pop(context);
+              _scanWithCamera();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -90,154 +90,170 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     final timeText =
         "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('水印生成器'),
+
+
+    return FScaffold(
+      scaffoldStyle: FScaffoldStyle(
+        systemOverlayStyle: SystemUiOverlayStyle(),
         backgroundColor: Colors.white,
-        actions: [
-          TextButton(
-            onPressed: _showScanOptions,
-            child: const Text(
-              '解析二维码',
-              style: TextStyle(color: Colors.blue, fontSize: 16),
-            ),
+        sidebarBackgroundColor: Colors.white,
+        childPadding: EdgeInsetsGeometry.zero,
+        footerDecoration: BoxDecoration(),
+      ).call,
+      header: FHeader(
+        title: const Text('水印生成器'),
+        suffixes: [
+          FHeaderAction(
+            icon: const Icon(FIcons.scanQrCode, size: 30),
+            onPress: _showScanOptions,
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(color: Color(0xffF8F8F8)),
-        child: ListView(
-          padding: const EdgeInsets.all(12),
-          children: [
-            // 图片 Grid
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount:
-                  provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1, // 1:1
-              ),
-              itemBuilder: (_, index) {
-                if (index < provider.pickedImages.length) {
-                  final img = provider.pickedImages[index];
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: AspectRatio(
-                          aspectRatio: 1,
-                          child: FittedBox(
-                            fit: BoxFit.cover,
-                            child: Image.file(File(img.path)),
-                          ),
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          // 图片 Grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount:
+                provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1, // 1:1
+            ),
+            itemBuilder: (_, index) {
+              if (index < provider.pickedImages.length) {
+                final img = provider.pickedImages[index];
+                return Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          child: Image.file(File(img.path)),
                         ),
-                      ),
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: GestureDetector(
-                          onTap: () => provider.removeImage(index),
-                          child: const CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.black54,
-                            child: Icon(
-                              Icons.close,
-                              size: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  // 添加图片按钮
-                  return GestureDetector(
-                    onTap: () => _openSelectImages(context),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Center(
-                        child: Icon(Icons.add, size: 40, color: Colors.grey),
                       ),
                     ),
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            // 日期
-            _buildSelectorRow(
-              icon: Icons.calendar_today,
-              title: '水印日期',
-              label: dateText,
-              locked: false,
-              onTap: () => showDatePickerDialog(
-                context: context,
-                initialDate: provider.selectedDate,
-                onSelected: provider.updateDate,
-              ),
-            ),
-            // 时间
-            _buildSelectorRow(
-              icon: Icons.access_time,
-              title: '水印时间',
-              label: timeText,
-              locked: false,
-              onTap: () => showTimePickerDialog(
-                context: context,
-                initialTime: provider.selectedTime,
-                onSelected: provider.updateTime,
-              ),
-            ),
-            // 用户
-            _buildSelectorRow(
-              icon: Icons.person,
-              title: '姓名',
-              label: provider.selectedUserName,
-              locked: false,
-              onTap: () => showUserPickerDialog(
-                context: context,
-                userList: provider.userList,
-                initialName: provider.selectedUserName,
-                onSelected: provider.updateUser,
-              ),
-            ),
-            // 用户编号输入框
-            _buildSelectorRow(
-              icon: Icons.badge,
-              title: '用户编号',
-              label: provider.selectedUserNumber,
-              locked: true,
-              onTap: () => {},
-            ),
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: GestureDetector(
+                        onTap: () => provider.removeImage(index),
+                        child: const CircleAvatar(
+                          radius: 10,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                // 添加图片按钮
+                return GestureDetector(
+                  onTap: () => _openSelectImages(context),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.add, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: 16),
 
-            const SizedBox(height: 12),
-            // 生成按钮
-            ElevatedButton(
-              onPressed: () => _handleGenerate(provider),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          FTileGroup(
+            divider: FItemDivider.full,
+            children: [
+              // 水印日期
+              FTile(
+                prefix: const Icon(FIcons.calendar, size: 25,),
+                title: const Text('水印日期'),
+                details: Text(dateText),
+                suffix: const Icon(FIcons.chevronRight),
+                onPress: () => showDatePickerDialog(
+                  context: context,
+                  initialDate: provider.selectedDate,
+                  onSelected: provider.updateDate,
                 ),
               ),
-              child: const Text('生成'),
-            ),
 
-            const SizedBox(height: 40),
-          ],
-        ),
+              // 水印时间
+              FTile(
+                prefix: const Icon(FIcons.alarmClock),
+                title: const Text('水印时间'),
+                details: Text(timeText),
+                suffix: const Icon(FIcons.chevronRight),
+                onPress: () => showTimePickerDialog(
+                  context: context,
+                  initialTime: provider.selectedTime,
+                  onSelected: provider.updateTime,
+                ),
+              ),
+
+              // 用户姓名
+              FTile(
+                prefix: const Icon(FIcons.circleUserRound),
+                title: const Text('姓名'),
+                details: Text(provider.selectedUserName),
+                suffix: const Icon(FIcons.chevronRight),
+                onPress: () => showUserPickerDialog(
+                  context: context,
+                  userList: provider.userList,
+                  initialName: provider.selectedUserName,
+                  onSelected: provider.updateUser,
+                ),
+              ),
+
+              // 用户编号（锁定，去掉 onPress 和右箭头）
+              FTile(
+                prefix: const Icon(FIcons.hash),
+                title: const Text('用户编号'),
+                details: Text(provider.selectedUserNumber),
+                suffix: const Icon(FIcons.lockKeyhole, color: Colors.grey),
+                enabled: false,
+                onPress: null,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+          // 生成按钮
+          FButton(
+            onPress: () => _handleGenerate(provider),
+            child: const Text('生成'),
+          ),
+
+          // ElevatedButton(
+          //   onPressed: () => _handleGenerate(provider),
+          //   style: ElevatedButton.styleFrom(
+          //     padding: const EdgeInsets.symmetric(vertical: 14),
+          //     shape: RoundedRectangleBorder(
+          //       borderRadius: BorderRadius.circular(10),
+          //     ),
+          //     textStyle: const TextStyle(
+          //       fontSize: 16,
+          //       fontWeight: FontWeight.bold,
+          //     ),
+          //   ),
+          //   child: const Text('生成'),
+          // ),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -262,7 +278,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           ),
         ),
         const SizedBox(height: 6),
-
         // 只有这行可点击
         GestureDetector(
           onTap: locked ? null : onTap,
@@ -275,13 +290,14 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               color: locked ? Colors.grey.shade100 : Colors.white,
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(icon, color: Colors.grey, size: 18),
                 const SizedBox(width: 12),
                 Text(label, style: const TextStyle(fontSize: 15)),
                 const Spacer(),
                 Icon(
-                  locked ? Icons.lock : Icons.arrow_forward_ios,
+                  locked ? FIcons.lockKeyhole : FIcons.arrowRight,
                   size: 16,
                   color: Colors.grey,
                 ),

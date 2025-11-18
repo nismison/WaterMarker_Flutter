@@ -39,20 +39,6 @@ void showDatePickerDialog({
   showFSheet(
     context: context,
     side: FLayout.btt,
-    style: context.theme.modalSheetStyle
-        .copyWith(
-          barrierFilter: (animation) => ImageFilter.compose(
-            outer: ImageFilter.blur(
-              sigmaX: animation * 5,
-              sigmaY: animation * 5,
-            ),
-            inner: ColorFilter.mode(
-              context.theme.colors.barrier,
-              BlendMode.srcOver,
-            ),
-          ),
-        )
-        .call,
     builder: (_) {
       return Container(
         height: 320,
@@ -95,7 +81,7 @@ void showDatePickerDialog({
                   child: Text(
                     '确定',
                     style: TextStyle(
-                      color: context.theme.colors.primaryForeground,
+                      color: Colors.black87,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
