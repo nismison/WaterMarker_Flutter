@@ -1,7 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:forui/assets.dart';
+import 'package:water_marker_test2/utils/loading_manager.dart';
 
+import '../utils/storage_util.dart';
 import 'advanced_image_preview_page.dart';
 
 class WatermarkPreviewPage extends StatelessWidget {
@@ -23,13 +27,23 @@ class WatermarkPreviewPage extends StatelessWidget {
         title: const Text("水印预览"),
         actions: [
           IconButton(
-            onPressed: () {
-              // 可扩展批量上传、保存操作
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text("批量上传功能未实现")));
+            onPressed: () async {
+              final loading = GlobalLoading();
+
+              try {
+                loading.show(context, text: "正在保存图片...");
+
+                final paths = await StorageUtil.saveImages(imagePaths);
+
+                print("成功保存到：$paths");
+                Fluttertoast.showToast(msg: "保存成功", backgroundColor: Colors.green);
+              } catch (e) {
+                Fluttertoast.showToast(msg: "保存失败：$e", backgroundColor: Colors.red);
+              } finally {
+                loading.hide();
+              }
             },
-            icon: const Icon(Icons.cloud_upload),
+            icon: const Icon(FIcons.saveAll),
           ),
         ],
       ),
