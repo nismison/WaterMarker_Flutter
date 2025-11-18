@@ -55,17 +55,25 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
     });
   }
 
+  /// 点击某一张缩略图时切换选中状态
   void _toggleSelection(AssetEntity asset) {
     final id = asset.id;
+
     setState(() {
       if (_selectedIds.contains(id)) {
+        // 如果已存在，取消选择
         _selectedIds.remove(id);
-      } else if (_selectedIds.length < widget.maxSelection) {
-        _selectedIds.add(id);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('最多只能选择 ${widget.maxSelection} 张图片')),
-        );
+        // 判断是否超过最大选择数
+        if (_selectedIds.length >= widget.maxSelection) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('最多只能选择 ${widget.maxSelection} 张图片')),
+          );
+          return;
+        }
+
+        // 按点击顺序加入
+        _selectedIds.add(id);
       }
     });
   }
