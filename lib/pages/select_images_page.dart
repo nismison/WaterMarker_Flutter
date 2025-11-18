@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '../widgets/asset_grid_view.dart';
@@ -37,15 +38,23 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
       return;
     }
 
-    final albums = await PhotoManager.getAssetPathList(onlyAll: true, type: RequestType.image);
+    final albums = await PhotoManager.getAssetPathList(
+      onlyAll: true,
+      type: RequestType.image,
+    );
     if (albums.isEmpty) return;
 
     final recentAlbum = albums.first;
-    final recentAssets = await recentAlbum.getAssetListPaged(page: 0, size: 200);
+    final recentAssets = await recentAlbum.getAssetListPaged(
+      page: 0,
+      size: 200,
+    );
 
     // 缓存缩略图，加速 UI
     final thumbs = await Future.wait(
-      recentAssets.map((e) => e.thumbnailDataWithSize(const ThumbnailSize(200, 200))),
+      recentAssets.map(
+        (e) => e.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
+      ),
     );
 
     // 一次 setState，全部更新
@@ -94,10 +103,20 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
   Widget build(BuildContext context) {
     final bool hasSelection = _selectedIds.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('选择图片'),
-        actions: [
+    return FScaffold(
+      header: FHeader.nested(
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [Text('选择图片')],
+        ),
+        prefixes: [
+          FHeaderAction.back(
+            onPress: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+        suffixes: [
           TextButton(
             onPressed: hasSelection ? _onConfirmPressed : null,
             child: Text(
@@ -107,14 +126,14 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
           ),
         ],
       ),
-      body: _assets.isEmpty
+      child: _assets.isEmpty
           ? const Center(child: Text('正在加载图片...'))
           : AssetGridView(
-        assets: _assets,
-        thumbs: _thumbs,         // 传入缩略图缓存
-        selectedIds: _selectedIds,
-        onTap: _toggleSelection,
-      ),
+              assets: _assets,
+              thumbs: _thumbs, // 传入缩略图缓存
+              selectedIds: _selectedIds,
+              onTap: _toggleSelection,
+            ),
     );
   }
 }

@@ -124,29 +124,16 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
     return FScaffold(
-      scaffoldStyle: FScaffoldStyle(
-        systemOverlayStyle: SystemUiOverlayStyle(),
-        backgroundColor: Colors.white,
-        sidebarBackgroundColor: Colors.white,
-        childPadding: EdgeInsetsGeometry.zero,
-        footerDecoration: BoxDecoration(),
-      ).call,
-      header: FHeader(
+      header: FHeader.nested(
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset('assets/icons/appicon.png', width: 30, height: 30),
-            const SizedBox(width: 8),
-            const Baseline(
-              baseline: 30,
-              baselineType: TextBaseline.alphabetic,
-              child: Text('水印生成器2.0'),
-            ),
+            const Text('水印生成器2.0'),
           ],
         ),
         suffixes: [
           FHeaderAction(
-            icon: const Icon(FIcons.scanQrCode, size: 30),
+            icon: const Icon(FIcons.scanQrCode),
             onPress: _showScanOptions,
           ),
         ],
@@ -303,11 +290,16 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           // 生成按钮
           FButton(
+            style: context.theme.buttonStyles.primary.copyWith(
+              contentStyle: context.theme.buttonStyles.primary.contentStyle.copyWith(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+              ).call,
+            ).call,
             onPress: () => _handleGenerate(provider),
-            child: const Text('生成'),
+            child: const Text('生成水印'),
           ),
           const SizedBox(height: 40),
         ],

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/assets.dart';
+import 'package:forui/forui.dart';
 import 'package:water_marker_test2/utils/loading_manager.dart';
 
 import '../utils/storage_util.dart';
@@ -22,12 +23,25 @@ class WatermarkPreviewPage extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("水印预览"),
-        actions: [
-          IconButton(
-            onPressed: () async {
+    return FScaffold(
+      header: FHeader.nested(
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('水印预览'),
+          ],
+        ),
+        prefixes: [
+          FHeaderAction.back(
+            onPress: () {
+              Navigator.pop(context);
+            },
+          ),
+        ],
+        suffixes: [
+          FHeaderAction(
+            icon: const Icon(FIcons.saveAll),
+            onPress: () async {
               final loading = GlobalLoading();
 
               try {
@@ -36,18 +50,23 @@ class WatermarkPreviewPage extends StatelessWidget {
                 final paths = await StorageUtil.saveImages(imagePaths);
 
                 debugPrint("成功保存到：$paths");
-                Fluttertoast.showToast(msg: "保存成功", backgroundColor: Colors.green);
+                Fluttertoast.showToast(
+                  msg: "保存成功",
+                  backgroundColor: Colors.green,
+                );
               } catch (e) {
-                Fluttertoast.showToast(msg: "保存失败：$e", backgroundColor: Colors.red);
+                Fluttertoast.showToast(
+                  msg: "保存失败：$e",
+                  backgroundColor: Colors.red,
+                );
               } finally {
                 loading.hide();
               }
             },
-            icon: const Icon(FIcons.saveAll),
           ),
         ],
       ),
-      body: GridView.builder(
+      child: GridView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: imagePaths.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
