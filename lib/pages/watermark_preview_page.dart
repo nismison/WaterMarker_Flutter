@@ -63,8 +63,14 @@ class WatermarkPreviewPage extends StatelessWidget {
   void _showPreview(BuildContext context, String path) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => _FullImageView(imagePath: path),
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => _FullImageView(imagePath: path),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
       ),
     );
   }

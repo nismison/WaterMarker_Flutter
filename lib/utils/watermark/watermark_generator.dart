@@ -1,9 +1,7 @@
-// lib/utils/watermark/watermark_generator.dart
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -47,12 +45,55 @@ Future<String> generateWatermarkForImage({
 
   // 读取原图
   final Uint8List inputBytes = await inputFile.readAsBytes();
-  final img.Image? original = img.decodeImage(inputBytes);
+  img.Image? original = img.decodeImage(inputBytes);
   if (original == null) {
     throw Exception('无法解析原始图片');
   }
 
-  // 直接拉伸适配到 1080x1920（简单粗暴，后面你要的话再做等比裁剪）
+  // 判断横图或竖图
+  final bool isLandscape = original.width > original.height;
+
+  // 横图则旋转90度（顺时针）
+  if (isLandscape) {
+    original = img.copyRotate(original, angle: 90);
+  }
+
+  // --------------------
+  // 按 9:16 裁剪中心区域
+  // --------------------
+  const double targetRatio = 9 / 16;
+  final double imageRatio = original.width / original.height;
+
+  // 竖图，宽太大 → 裁宽度
+  if (imageRatio > targetRatio) {
+    final int newWidth = (original.height * targetRatio).toInt();
+    final int xOffset = ((original.width - newWidth) / 2).round();
+
+    original = img.copyCrop(
+      original,
+      x: xOffset,
+      y: 0,
+      width: newWidth,
+      height: original.height,
+    );
+  }
+  // 竖图，高太大 → 裁高度（一般不会走到，但逻辑补上）
+  else if (imageRatio < targetRatio) {
+    final int newHeight = (original.width / targetRatio).toInt();
+    final int yOffset = ((original.height - newHeight) / 2).round();
+
+    original = img.copyCrop(
+      original,
+      x: 0,
+      y: yOffset,
+      width: original.width,
+      height: newHeight,
+    );
+  }
+
+  // --------------------
+  // 最终拉伸适配到 1080x1920
+  // --------------------
   const int canvasWidth = 1080;
   const int canvasHeight = 1920;
 
@@ -137,8 +178,9 @@ Future<img.Image> _generateQrImage(String text, int size) async {
   );
 
   // 转 ByteData
-  final ByteData? byteData =
-  await qrUiImage.toByteData(format: ui.ImageByteFormat.png);
+  final ByteData? byteData = await qrUiImage.toByteData(
+    format: ui.ImageByteFormat.png,
+  );
   if (byteData == null) {
     throw Exception("二维码绘制失败：ByteData 为空");
   }
