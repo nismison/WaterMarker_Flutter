@@ -1,6 +1,7 @@
 // lib/utils/storage_util.dart
 
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 
@@ -10,10 +11,6 @@ class StorageUtil {
       '/storage/emulated/0/lebang/waterImages/';
 
   /// 保存多个图片到固定目录
-  ///
-  /// :param imagePaths: 本地原始图片路径列表（String[]）
-  /// :return: List<String> 成功保存后的新路径列表
-  /// :throws: Exception when permission denied or save failed
   static Future<List<String>> saveImages(List<String> imagePaths) async {
     // 检查并申请必要权限
     final hasPermission = await _ensureStoragePermission();
@@ -33,7 +30,7 @@ class StorageUtil {
       final srcFile = File(srcPath);
 
       if (!await srcFile.exists()) {
-        print("源文件不存在: $srcPath，跳过");
+        debugPrint("源文件不存在: $srcPath，跳过");
         continue;
       }
 
@@ -52,10 +49,10 @@ class StorageUtil {
       // 执行复制
       try {
         await srcFile.copy(targetPath);
-        print("已保存: $targetPath");
+        debugPrint("已保存: $targetPath");
         savedPaths.add(targetPath);
       } catch (e) {
-        print("保存失败: $e");
+        debugPrint("保存失败: $e");
       }
     }
 

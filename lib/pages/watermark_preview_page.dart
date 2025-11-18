@@ -35,7 +35,7 @@ class WatermarkPreviewPage extends StatelessWidget {
 
                 final paths = await StorageUtil.saveImages(imagePaths);
 
-                print("成功保存到：$paths");
+                debugPrint("成功保存到：$paths");
                 Fluttertoast.showToast(msg: "保存成功", backgroundColor: Colors.green);
               } catch (e) {
                 Fluttertoast.showToast(msg: "保存失败：$e", backgroundColor: Colors.red);

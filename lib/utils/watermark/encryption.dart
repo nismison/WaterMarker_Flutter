@@ -5,13 +5,13 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/cupertino.dart';
 
 /// 固定 AES 密钥，必须 16 字节
-const String AES_KEY = 'e373d090928170eb';
+const String aesKey = 'e373d090928170eb';
 
 /// 固定参数
-const int FIXED_OR = 2;
+const int fixedOr = 2;
 
 /// 坐标范围
-const Map<String, double> COORD_RANGE = {
+const Map<String, double> coordRange = {
   "lat_min": 22.763168,
   "lat_max": 22.764769,
   "lon_min": 108.430403,
@@ -22,11 +22,11 @@ const Map<String, double> COORD_RANGE = {
 Map<String, dynamic> generateRandomCoordinates() {
   final rand = Random();
   final lat =
-      COORD_RANGE["lat_min"]! +
-          rand.nextDouble() * (COORD_RANGE["lat_max"]! - COORD_RANGE["lat_min"]!);
+      coordRange["lat_min"]! +
+          rand.nextDouble() * (coordRange["lat_max"]! - coordRange["lat_min"]!);
   final lon =
-      COORD_RANGE["lon_min"]! +
-          rand.nextDouble() * (COORD_RANGE["lon_max"]! - COORD_RANGE["lon_min"]!);
+      coordRange["lon_min"]! +
+          rand.nextDouble() * (coordRange["lon_max"]! - coordRange["lon_min"]!);
   return {
     "c": "GCJ-02",
     "la": double.parse(lat.toStringAsFixed(6)),
@@ -47,7 +47,7 @@ Map<String, dynamic> createWatermarkData({
         ? generateRandomCoordinates()
         : {"c": "GCJ-02", "la": 22.764439, "lo": 108.432947, "n": ""},
     "n": n,
-    "or": FIXED_OR,
+    "or": fixedOr,
     "ot": timestamp,
     "s": s,
   };
@@ -57,7 +57,7 @@ Map<String, dynamic> createWatermarkData({
 
 /// AES-128-ECB + PKCS7 加密
 String encryptWatermark(Map<String, dynamic> data) {
-  final key = encrypt.Key.fromUtf8(AES_KEY);
+  final key = encrypt.Key.fromUtf8(aesKey);
   final encryptor = encrypt.Encrypter(
     encrypt.AES(key, mode: encrypt.AESMode.ecb, padding: 'PKCS7'),
   );
@@ -78,7 +78,7 @@ Map<String, dynamic>? decryptWatermark(String encryptedB64) {
     final encryptedBytes = base64Decode(Uri.decodeComponent(encryptedB64));
 
     // AES-ECB + PKCS7 解密
-    final key = encrypt.Key.fromUtf8(AES_KEY);
+    final key = encrypt.Key.fromUtf8(aesKey);
     final decryptor = encrypt.Encrypter(
       encrypt.AES(key, mode: encrypt.AESMode.ecb, padding: 'PKCS7'),
     );

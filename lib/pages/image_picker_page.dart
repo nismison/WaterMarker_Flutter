@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -9,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 import 'package:water_marker_test2/pages/qr_scan_page.dart';
-import 'package:water_marker_test2/pages/select_images_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
 import '../providers/image_picker_provider.dart';
 import '../utils/image_picker_helper.dart';
@@ -29,26 +27,6 @@ class ImagePickerPage extends StatefulWidget {
 }
 
 class _ImagePickerPageState extends State<ImagePickerPage> {
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _scanFromGallery() async {
-    final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
-    if (file == null) return;
-
-    final result = await QrCodeToolsPlugin.decodeFrom(file.path);
-    if (!mounted) return;
-
-    if (result != null && result.trim().isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('解析成功: $result')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('未识别到二维码')));
-    }
-  }
-
   Future<void> _scanWithCamera() async {
     Navigator.of(
       context,
@@ -239,7 +217,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                     );
 
                     if (selectedPaths == null) {
-                      print("用户取消了选择");
+                      debugPrint("用户取消了选择");
                       return;
                     }
 
@@ -382,23 +360,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           builder: (_) => WatermarkPreviewPage(imagePaths: watermarkedPaths),
         ),
       );
-    }
-  }
-
-  Future<void> _openSelectImages(BuildContext context) async {
-    final provider = context.read<ImagePickerProvider>();
-    final List<String>? result = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SelectImagesPage(
-          maxSelection: provider.maxImages,
-          preSelectedPaths: provider.pickedPaths,
-        ),
-      ),
-    );
-
-    if (result != null && result.isNotEmpty) {
-      provider.addSelected(result);
     }
   }
 }

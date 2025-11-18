@@ -6,7 +6,7 @@ import '../pages/select_images_page.dart';
 /// :param context: 传入 BuildContext
 /// :param maxSelection: 最多选择的图片数
 /// :param preSelectedPaths: 打开页面时默认选中的图片
-/// :returns: 如果用户按“确定”选择了图片，返回 List<String>；如果按返回键或取消，返回 null
+/// :returns: 如果用户按“确定”选择了图片，返回 List；如果按返回键或取消，返回 null
 Future<List<String>?> showImagePicker(
     BuildContext context, {
       int maxSelection = 9,
