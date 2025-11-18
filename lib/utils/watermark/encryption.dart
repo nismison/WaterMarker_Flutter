@@ -23,10 +23,10 @@ Map<String, dynamic> generateRandomCoordinates() {
   final rand = Random();
   final lat =
       COORD_RANGE["lat_min"]! +
-      rand.nextDouble() * (COORD_RANGE["lat_max"]! - COORD_RANGE["lat_min"]!);
+          rand.nextDouble() * (COORD_RANGE["lat_max"]! - COORD_RANGE["lat_min"]!);
   final lon =
       COORD_RANGE["lon_min"]! +
-      rand.nextDouble() * (COORD_RANGE["lon_max"]! - COORD_RANGE["lon_min"]!);
+          rand.nextDouble() * (COORD_RANGE["lon_max"]! - COORD_RANGE["lon_min"]!);
   return {
     "c": "GCJ-02",
     "la": double.parse(lat.toStringAsFixed(6)),
@@ -55,7 +55,7 @@ Map<String, dynamic> createWatermarkData({
   return data;
 }
 
-/// AES-128-ECB + PKCS7
+/// AES-128-ECB + PKCS7 加密
 String encryptWatermark(Map<String, dynamic> data) {
   final key = encrypt.Key.fromUtf8(AES_KEY);
   final encryptor = encrypt.Encrypter(
@@ -66,4 +66,35 @@ String encryptWatermark(Map<String, dynamic> data) {
   final encrypted = encryptor.encrypt(jsonString, iv: encrypt.IV.fromLength(0));
 
   return base64Encode(encrypted.bytes);
+}
+
+/// AES-128-ECB + PKCS7 解密（字符串密钥）
+///
+/// :param encryptedB64: Base64 编码密文
+/// :returns: 解析后的 JSON（Map），解密错误返回 null
+Map<String, dynamic>? decryptWatermark(String encryptedB64) {
+  try {
+    // Base64 解码
+    final encryptedBytes = base64Decode(Uri.decodeComponent(encryptedB64));
+
+    // AES-ECB + PKCS7 解密
+    final key = encrypt.Key.fromUtf8(AES_KEY);
+    final decryptor = encrypt.Encrypter(
+      encrypt.AES(key, mode: encrypt.AESMode.ecb, padding: 'PKCS7'),
+    );
+    final decrypted = decryptor.decrypt(
+      encrypt.Encrypted(encryptedBytes),
+      iv: encrypt.IV.fromLength(0),
+    );
+
+    debugPrint("解密得到: $decrypted");
+
+    // JSON 解析
+    return jsonDecode(decrypted);
+
+  } catch (e, stacktrace) {
+    debugPrint("解密失败: $e");
+    debugPrint("$stacktrace");
+    return null;
+  }
 }

@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +12,9 @@ import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/select_images_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
 import '../providers/image_picker_provider.dart';
+import '../utils/image_picker_helper.dart';
 import '../utils/loading_manager.dart';
+import '../utils/watermark/encryption.dart';
 import '../utils/watermark/watermark_generator.dart';
 import '../widgets/date_picker_dialog.dart';
 import '../widgets/time_picker_dialog.dart';
@@ -59,9 +64,64 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           FTile(
             prefix: Icon(FIcons.image),
             title: const Text('从相册识别二维码'),
-            onPress: () {
+            // onPress: () {
+            //   Navigator.pop(context);
+            //   _scanFromGallery();
+            // },
+            onPress: () async {
               Navigator.pop(context);
-              _scanFromGallery();
+              final selectedPaths = await showImagePicker(
+                context,
+                maxSelection: 1,
+              );
+
+              if (selectedPaths == null) {
+                return;
+              }
+
+              final result = await QrCodeToolsPlugin.decodeFrom(
+                selectedPaths[0],
+              );
+              if (!mounted) return;
+
+              if (result != null && result.trim().isNotEmpty) {
+                final decrypted = decryptWatermark(jsonDecode(result)['text']);
+                if (decrypted == null) {
+                  debugPrint("解密失败");
+                  return;
+                }
+
+                final name = decrypted["n"];
+                final number = decrypted["s"];
+
+                // 获取 Provider
+                final provider = Provider.of<ImagePickerProvider>(
+                  context,
+                  listen: false,
+                );
+                // 判断是否存在
+                final exists = provider.userList.any(
+                  (item) => item["number"] == number,
+                );
+
+                if (!exists) {
+                  provider.addUser({"name": name, "number": number});
+                  Fluttertoast.showToast(
+                    msg: "已添加新用户 [$name - $number]",
+                    backgroundColor: Colors.green,
+                  );
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "用户已存在，无需添加",
+                    backgroundColor: Colors.red,
+                  );
+                }
+              } else {
+                Fluttertoast.showToast(
+                  msg: "未识别到二维码",
+                  backgroundColor: Colors.red,
+                );
+              }
             },
           ),
           FTile(
@@ -141,7 +201,9 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                               imagePath: img.path,
                               useHero: true,
                               fadeDuration: Duration(milliseconds: 150),
-                              imageList: provider.pickedImages.map((e) => e.path).toList(),
+                              imageList: provider.pickedImages
+                                  .map((e) => e.path)
+                                  .toList(),
                             );
                           },
                         ),
@@ -168,7 +230,21 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
               } else {
                 // 添加图片按钮
                 return GestureDetector(
-                  onTap: () => _openSelectImages(context),
+                  onTap: () async {
+                    final provider = context.read<ImagePickerProvider>();
+                    final selectedPaths = await showImagePicker(
+                      context,
+                      maxSelection: provider.maxImages,
+                      preSelectedPaths: provider.pickedPaths,
+                    );
+
+                    if (selectedPaths == null) {
+                      print("用户取消了选择");
+                      return;
+                    }
+
+                    provider.addSelected(selectedPaths);
+                  },
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.grey[200],

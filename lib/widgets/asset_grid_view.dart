@@ -1,138 +1,64 @@
-import 'package:flutter/material.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'dart:typed_data';
 
-class AssetGridView extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
+
+class AssetGridView extends StatelessWidget {
   final List<AssetEntity> assets;
-  final ValueNotifier<Set<String>> selectedIds;
-  final ValueChanged<AssetEntity> onToggle;
+  final List<Uint8List?> thumbs;   // 缓存缩略图，加入参数
+  final List<String> selectedIds;
+  final void Function(AssetEntity) onTap;
 
   const AssetGridView({
     super.key,
     required this.assets,
-    required this.selectedIds,
-    required this.onToggle,
-  });
-
-  @override
-  State<AssetGridView> createState() => _AssetGridViewState();
-}
-
-class _AssetGridViewState extends State<AssetGridView> {
-  final Map<String, Uint8List> _thumbCache = {};
-
-  Future<Uint8List?> _loadThumb(AssetEntity asset) async {
-    if (_thumbCache.containsKey(asset.id)) {
-      return _thumbCache[asset.id];
-    }
-    final data = await asset.thumbnailDataWithSize(
-      const ThumbnailSize(200, 200),
-    );
-    if (data != null) {
-      _thumbCache[asset.id] = data;
-    }
-    return data;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(6),
-      itemCount: widget.assets.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 4,
-        mainAxisSpacing: 4,
-        childAspectRatio: 1,
-      ),
-      itemBuilder: (_, index) {
-        final asset = widget.assets[index];
-        return FutureBuilder<Uint8List?>(
-          future: _loadThumb(asset),
-          builder: (_, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const ColoredBox(
-                color: Color(0xFFF0F0F0),
-                child: Center(
-                  child: SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 1),
-                  ),
-                ),
-              );
-            }
-            if (snapshot.hasError || snapshot.data == null) {
-              return const Center(child: Icon(Icons.error));
-            }
-
-            return _AssetTile(
-              asset: asset,
-              thumbBytes: snapshot.data!,
-              selectedIds: widget.selectedIds,
-              onTap: widget.onToggle,
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _AssetTile extends StatelessWidget {
-  final AssetEntity asset;
-  final Uint8List thumbBytes;
-  final ValueNotifier<Set<String>> selectedIds;
-  final ValueChanged<AssetEntity> onTap;
-
-  const _AssetTile({
-    required this.asset,
-    required this.thumbBytes,
+    required this.thumbs,
     required this.selectedIds,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onTap(asset),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 图片永不重绘
-          ClipRRect(
-            borderRadius: BorderRadius.circular(5),
-            child: Image.memory(thumbBytes, fit: BoxFit.cover),
-          ),
-          // 仅重绘勾选部分，局部刷新
-          ValueListenableBuilder<Set<String>>(
-            valueListenable: selectedIds,
-            builder: (_, selected, __) {
-              final isSelected = selected.contains(asset.id);
-              return AnimatedOpacity(
-                opacity: isSelected ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 90),
-                child: Align(
-                  alignment: Alignment.topRight,
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
+      ),
+      itemCount: assets.length,
+      itemBuilder: (context, index) {
+        final asset = assets[index];
+        final thumb = thumbs[index];
+        final isSelected = selectedIds.contains(asset.id);
+
+        return GestureDetector(
+          onTap: () => onTap(asset),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: thumb == null
+                    ? Container(color: Colors.grey.shade200)
+                    : Image.memory(thumb, fit: BoxFit.cover),
+              ),
+              if (isSelected)
+                Positioned(
+                  top: 4,
+                  right: 4,
                   child: Container(
-                    margin: const EdgeInsets.only(top: 4, right: 4),
+                    width: 22,
+                    height: 22,
                     decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
                       color: Colors.blue,
+                      shape: BoxShape.circle,
                     ),
-                    padding: const EdgeInsets.all(4),
-                    child: const Icon(
-                      Icons.check,
-                      size: 14,
-                      color: Colors.white,
-                    ),
+                    child: const Icon(Icons.check, size: 16, color: Colors.white),
                   ),
                 ),
-              );
-            },
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

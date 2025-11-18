@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// @description 管理全局图片选择与统一时间、日期
 class ImagePickerProvider extends ChangeNotifier {
@@ -9,13 +12,13 @@ class ImagePickerProvider extends ChangeNotifier {
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
 
-  // 用户选择
-  List<Map<String, dynamic>> userList = [
-    {"name": "黄光燃", "number": 2425430}, // 测试数据，后期可动态替换
-    {"name": "梁振卓", "number": 2409840},
-    {"name": "测试用户", "number": 3311223},
-    {"name": "测试用户2", "number": 7744224},
-  ];
+  static const String _userListKey = 'userList';
+
+  List<Map<String, dynamic>> userList = [];
+
+  ImagePickerProvider() {
+    _initUserList();
+  }
 
   Map<String, dynamic>? selectedUser; // 当前选中的用户数据
 
@@ -74,4 +77,53 @@ class ImagePickerProvider extends ChangeNotifier {
 
   String get selectedUserName => selectedUser?['name'] ?? "未选择";
   String get selectedUserNumber => selectedUser?['number']?.toString() ?? "";
+
+  /// 初始化用户列表
+  Future<void> _initUserList() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final storedList = prefs.getString(_userListKey);
+    if (storedList == null) {
+      debugPrint("SharedPrefs中无userList，初始化为空列表");
+      await prefs.setString(_userListKey, jsonEncode([])); // 写入空列表
+      userList = [];
+    } else {
+      try {
+        userList = List<Map<String, dynamic>>.from(
+          jsonDecode(storedList),
+        );
+        debugPrint("SharedPrefs读取到userList: $userList");
+        selectedUser = userList.first;
+      } catch (e) {
+        debugPrint("读取userList失败，重置为空列表: $e");
+        userList = [];
+      }
+    }
+
+    notifyListeners();
+  }
+
+  /// 更新用户列表（支持添加、替换等）
+  Future<void> updateUserList(List<Map<String, dynamic>> newList) async {
+    userList = newList;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userListKey, jsonEncode(newList));
+
+    notifyListeners();
+  }
+
+  /// 添加一个用户
+  Future<void> addUser(Map<String, dynamic> user) async {
+    userList.add(user);
+    await updateUserList(userList);
+  }
+
+  /// 清空用户列表并同步SharedPrefs
+  Future<void> clearUserList() async {
+    userList = [];
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userListKey, jsonEncode([]));
+    notifyListeners();
+  }
 }
