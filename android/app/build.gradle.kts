@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.water_marker_test2"
+    namespace = "com.watermarker.v2"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

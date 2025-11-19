@@ -7,6 +7,9 @@ import 'package:provider/provider.dart';
 import 'router.dart';
 import 'providers/image_picker_provider.dart';
 
+// 全局 RouteObserver，用于监听页面返回事件（RouteAware）
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 void main() {
   AppRouter.setupRouter();
   runApp(const WatermarkApp());
@@ -85,6 +88,7 @@ class WatermarkApp extends StatelessWidget {
         builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
         onGenerateRoute: AppRouter.router.generator,
         initialRoute: '/',
+        navigatorObservers: [routeObserver],
       ),
     );
   }

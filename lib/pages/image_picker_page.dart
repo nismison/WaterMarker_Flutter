@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,9 +9,11 @@ import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
+import '../main.dart';
 import '../providers/image_picker_provider.dart';
 import '../utils/image_picker_helper.dart';
 import '../utils/loading_manager.dart';
+import '../utils/storage_permission_util.dart';
 import '../utils/watermark/encryption.dart';
 import '../utils/watermark/watermark_generator.dart';
 import '../widgets/date_picker_dialog.dart';
@@ -43,6 +45,11 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             prefix: Icon(FIcons.image),
             title: const Text('从相册识别二维码'),
             onPress: () async {
+              if (!await StoragePermissionUtil.hasImageAccessPermission()) {
+                StoragePermissionUtil.requestImageAccessPermission();
+                return;
+              }
+
               Navigator.pop(context);
               final selectedPaths = await showImagePicker(
                 context,
@@ -104,7 +111,12 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           FTile(
             prefix: Icon(FIcons.image),
             title: const Text('打开相机扫描二维码'),
-            onPress: () {
+            onPress: () async {
+              if (!await StoragePermissionUtil.hasCameraPermission()) {
+                StoragePermissionUtil.requestCameraPermission();
+                return;
+              }
+
               Navigator.pop(context);
               _scanWithCamera();
             },
@@ -127,9 +139,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       header: FHeader.nested(
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text('水印生成器2.0'),
-          ],
+          children: [const Text('水印生成器2.0')],
         ),
         suffixes: [
           FHeaderAction(
@@ -206,6 +216,11 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 // 添加图片按钮
                 return GestureDetector(
                   onTap: () async {
+                    if (!await StoragePermissionUtil.hasImageAccessPermission()) {
+                      StoragePermissionUtil.requestImageAccessPermission();
+                      return;
+                    }
+
                     final provider = context.read<ImagePickerProvider>();
                     final selectedPaths = await showImagePicker(
                       context,
@@ -293,11 +308,18 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           const SizedBox(height: 20),
           // 生成按钮
           FButton(
-            style: context.theme.buttonStyles.primary.copyWith(
-              contentStyle: context.theme.buttonStyles.primary.contentStyle.copyWith(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-              ).call,
-            ).call,
+            style: context.theme.buttonStyles.primary
+                .copyWith(
+                  contentStyle: context.theme.buttonStyles.primary.contentStyle
+                      .copyWith(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 15,
+                        ),
+                      )
+                      .call,
+                )
+                .call,
             onPress: () => _handleGenerate(provider),
             child: const Text('生成水印'),
           ),
