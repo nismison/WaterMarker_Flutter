@@ -88,12 +88,13 @@ class WatermarkPreviewPage extends StatelessWidget {
                 context,
                 imagePath: path,
                 useHero: true,
+                tagPrefix: "watermark_preview_page",
                 fadeDuration: Duration(milliseconds: 150),
                 imageList: imagePaths,
               ),
             },
             child: Hero(
-              tag: path,
+              tag: "watermark_preview_page_$path",
               child: Image.file(File(path), fit: BoxFit.cover),
             ),
           );

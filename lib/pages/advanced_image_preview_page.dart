@@ -13,6 +13,7 @@ Future<void> showImagePreview(
       String? imagePath,
       List<String>? imageList,
       bool useHero = false,
+      String? tagPrefix = 'preview',
       Duration fadeDuration = const Duration(milliseconds: 150),
     }) async {
   if (imageList == null && imagePath == null) {
@@ -36,6 +37,7 @@ Future<void> showImagePreview(
         imagePath: imagePath,
         initialIndex: initialIndex,
         useHero: useHero,
+        tagPrefix: tagPrefix,
       ),
       transitionsBuilder: (_, animation, _, child) {
         return FadeTransition(
@@ -51,6 +53,7 @@ Future<void> showImagePreview(
 class AdvancedImagePreviewPage extends StatefulWidget {
   final List<String>? imageList;
   final String? imagePath;
+  final String? tagPrefix;
   final int initialIndex;
   final bool useHero;
 
@@ -60,6 +63,7 @@ class AdvancedImagePreviewPage extends StatefulWidget {
     this.imagePath,
     this.initialIndex = 0,
     this.useHero = false,
+    this.tagPrefix = 'preview',
   });
 
   @override
@@ -201,7 +205,7 @@ class _AdvancedImagePreviewPageState extends State<AdvancedImagePreviewPage>
       },
       onDoubleTap: _onImageDoubleTap,
       heroBuilderForSlidingPage: widget.useHero
-          ? (Widget result) => Hero(tag: path, child: result)
+          ? (Widget result) => Hero(tag: "${widget.tagPrefix}_$path", child: result)
           : null,
     );
   }

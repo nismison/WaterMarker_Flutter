@@ -261,7 +261,7 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                         aspectRatio: 1,
                         child: GestureDetector(
                           child: Hero(
-                            tag: img.path,
+                            tag: "index_page_${img.path}",
                             child: Image.file(
                               File(img.path),
                               fit: BoxFit.cover,
@@ -272,6 +272,7 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                               context,
                               imagePath: img.path,
                               useHero: true,
+                              tagPrefix: "index_page",
                               fadeDuration: Duration(milliseconds: 150),
                               imageList: provider.pickedImages
                                   .map((e) => e.path)

@@ -1,10 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '../widgets/asset_grid_view.dart';
+import 'advanced_image_preview_page.dart';
 
 class SelectImagesPage extends StatefulWidget {
   final int maxSelection;
@@ -21,75 +20,62 @@ class SelectImagesPage extends StatefulWidget {
 }
 
 class _SelectImagesPageState extends State<SelectImagesPage> {
-  List<AssetEntity> _assets = [];
-  List<Uint8List?> _thumbs = []; // 缓存缩略图
   final List<String> _selectedIds = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchAssets();
+
+    // 如果你的 preSelectedPaths 是 filePath，需要转 AssetEntity.id
+    if (widget.preSelectedPaths.isNotEmpty) {
+      // 根据你的需求自行处理映射
+    }
   }
 
-  Future<void> _fetchAssets() async {
-    final albums = await PhotoManager.getAssetPathList(
-      onlyAll: true,
-      type: RequestType.image,
-    );
-    if (albums.isEmpty) return;
-
-    final recentAlbum = albums.first;
-    final recentAssets = await recentAlbum.getAssetListPaged(
-      page: 0,
-      size: 200,
-    );
-
-    // 缓存缩略图，加速 UI
-    final thumbs = await Future.wait(
-      recentAssets.map(
-        (e) => e.thumbnailDataWithSize(const ThumbnailSize(200, 200)),
-      ),
-    );
-
-    // 一次 setState，全部更新
-    setState(() {
-      _assets = recentAssets;
-      _thumbs = thumbs;
-    });
-  }
-
-  /// 点击某一张缩略图时切换选中状态
+  /// 点击右上角勾选框
   void _toggleSelection(AssetEntity asset) {
     final id = asset.id;
 
     setState(() {
       if (_selectedIds.contains(id)) {
-        // 如果已存在，取消选择
+        // 已选 → 允许取消
         _selectedIds.remove(id);
       } else {
-        // 判断是否超过最大选择数
+        // 未选 → 但已经达到上限，直接禁止
         if (_selectedIds.length >= widget.maxSelection) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('最多只能选择 ${widget.maxSelection} 张图片')),
-          );
-          return;
+          return; // 直接阻止，不提示、不报错
         }
-
-        // 按点击顺序加入
         _selectedIds.add(id);
       }
     });
   }
 
+  /// 点击图片 → 预览
+  void _previewImage(AssetEntity asset) async {
+    final file = await asset.file;
+    if (file == null) return;
+
+    showImagePreview(
+      context,
+      imagePath: file.path,
+      useHero: true,
+      tagPrefix: 'select_page',
+    );
+  }
+
+  /// 点击确定按钮 → 返回 filePaths
   Future<void> _onConfirmPressed() async {
     final paths = <String>[];
+
     for (final id in _selectedIds) {
       final entity = await AssetEntity.fromId(id);
       final file = await entity?.file;
+
       if (file != null) {
         paths.add(file.path);
       }
     }
+
     Navigator.pop(context, paths);
   }
 
@@ -99,17 +85,8 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
 
     return FScaffold(
       header: FHeader.nested(
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [Text('选择图片')],
-        ),
-        prefixes: [
-          FHeaderAction.back(
-            onPress: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
+        title: Row(children: const [Text('选择图片')]),
+        prefixes: [FHeaderAction.back(onPress: () => Navigator.pop(context))],
         suffixes: [
           TextButton(
             onPressed: hasSelection ? _onConfirmPressed : null,
@@ -120,14 +97,13 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
           ),
         ],
       ),
-      child: _assets.isEmpty
-          ? const Center(child: Text('正在加载图片...'))
-          : AssetGridView(
-              assets: _assets,
-              thumbs: _thumbs, // 传入缩略图缓存
-              selectedIds: _selectedIds,
-              onTap: _toggleSelection,
-            ),
+
+      child: AssetGridView(
+        selectedIds: _selectedIds,
+        maxSelection: widget.maxSelection,
+        onPreview: _previewImage, // 点击图片
+        onSelect: _toggleSelection, // 点击勾选框
+      ),
     );
   }
 }
