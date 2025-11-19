@@ -25,11 +25,64 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
   @override
   void initState() {
     super.initState();
+    _initPreSelected();
+  }
 
-    // 如果你的 preSelectedPaths 是 filePath，需要转 AssetEntity.id
-    if (widget.preSelectedPaths.isNotEmpty) {
-      // 根据你的需求自行处理映射
-    }
+  /// 将 preSelectedPaths（filePath）映射到 asset.id
+  Future<void> _initPreSelected() async {
+    if (widget.preSelectedPaths.isEmpty) return;
+
+    final List<String> filePaths = widget.preSelectedPaths;
+    final List<String> selectedIds = [];
+
+    // 获取最近相册（“所有图片”）
+    final albums = await PhotoManager.getAssetPathList(
+      onlyAll: true,
+      type: RequestType.image,
+    );
+
+    if (albums.isEmpty) return;
+    final album = albums.first;
+
+    // 每个 filePath 并发查找
+    final futures = filePaths.map((filePath) async {
+      String? matchedId;
+
+      int page = 0;
+      const int pageSize = 100;
+
+      while (true) {
+        final List<AssetEntity> assets = await album.getAssetListPaged(
+          page: page,
+          size: pageSize,
+        );
+
+        if (assets.isEmpty) break;
+
+        for (final asset in assets) {
+          final file = await asset.file;
+          if (file != null && file.path == filePath) {
+            matchedId = asset.id;
+            break;
+          }
+        }
+
+        if (matchedId != null) break;
+        page++;
+      }
+
+      if (matchedId != null) {
+        selectedIds.add(matchedId);
+      }
+    });
+
+    await Future.wait(futures);
+
+    if (!mounted) return;
+
+    setState(() {
+      _selectedIds.addAll(selectedIds);
+    });
   }
 
   /// 点击右上角勾选框

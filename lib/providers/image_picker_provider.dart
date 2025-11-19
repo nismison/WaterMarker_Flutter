@@ -28,15 +28,18 @@ class ImagePickerProvider extends ChangeNotifier {
 
   bool get canAddMore => _pickedImages.length < maxImages;
 
-  /// 从路径列表批量添加（选择页面返回的结果）
-  void addSelected(List<String> paths) {
-    final existing = pickedPaths.toSet();
-    final remain = maxImages - _pickedImages.length;
+  void setSelected(List<String> paths) {
+    // 去重
+    final unique = paths.toSet().toList();
 
-    final Iterable<String> toAdd =
-    paths.where((p) => !existing.contains(p)).take(remain);
+    // 限制最大数量
+    final limit = unique.take(maxImages).toList();
 
-    _pickedImages.addAll(toAdd.map((p) => XFile(p)));
+    // 覆盖当前已选
+    _pickedImages
+      ..clear()
+      ..addAll(limit.map((p) => XFile(p)));
+
     notifyListeners();
   }
 

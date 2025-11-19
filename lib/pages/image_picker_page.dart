@@ -320,7 +320,7 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                       return;
                     }
 
-                    provider.addSelected(selectedPaths);
+                    provider.setSelected(selectedPaths);
                   },
                   child: Container(
                     decoration: BoxDecoration(

@@ -27,8 +27,6 @@ class _AssetGridViewState extends State<AssetGridView> {
   final List<AssetEntity> _assets = [];
   final Map<String, Uint8List?> _thumbCache = {};
 
-  bool _dragSelecting = false; // 当前是否批量选择中
-  bool _dragSelectingHoriz = false; // 横向拖动触发批量选择
   int? _lastDragIndex;
 
   AssetPathEntity? _gallery;
@@ -109,10 +107,7 @@ class _AssetGridViewState extends State<AssetGridView> {
                 >(() => HorizontalDragGestureRecognizer(), (
                   HorizontalDragGestureRecognizer instance,
                 ) {
-                  instance.onStart = (details) {
-                    _dragSelecting = true;
-                    _dragSelectingHoriz = true;
-                  };
+                  instance.onStart = (details) {};
 
                   instance.onUpdate = (details) {
                     final pos = details.localPosition;
@@ -133,8 +128,6 @@ class _AssetGridViewState extends State<AssetGridView> {
                   };
 
                   instance.onEnd = (_) {
-                    _dragSelecting = false;
-                    _dragSelectingHoriz = false;
                     _lastDragIndex = null;
                   };
                 }),
@@ -174,46 +167,54 @@ class _AssetGridViewState extends State<AssetGridView> {
                     fit: StackFit.expand,
                     children: [
                       // 缩略图 + 预览
-                  FutureBuilder<Uint8List?>(
-                  future: _loadThumb(asset),
-                  builder: (_, snap) {
-                    if (!snap.hasData) {
-                      return Container(color: Colors.grey.shade200);
-                    }
+                      FutureBuilder<Uint8List?>(
+                        future: _loadThumb(asset),
+                        builder: (_, snap) {
+                          if (!snap.hasData) {
+                            return Container(color: Colors.grey.shade200);
+                          }
 
-                    // 再取 filePath（为 Hero tag 服务）
-                    return FutureBuilder<File?>(
-                      future: asset.file,
-                      builder: (_, fileSnap) {
-                        if (!fileSnap.hasData) {
-                          // 没有 filePath 时先显示 thumbnail
-                          return Image.memory(
-                            snap.data!,
-                            fit: BoxFit.cover,
+                          // 再取 filePath（为 Hero tag 服务）
+                          return FutureBuilder<File?>(
+                            future: asset.file,
+                            builder: (_, fileSnap) {
+                              if (!fileSnap.hasData) {
+                                // 没有 filePath 时先显示 thumbnail
+                                return Image.memory(
+                                  snap.data!,
+                                  fit: BoxFit.cover,
+                                );
+                              }
+
+                              final filePath = fileSnap.data!.path;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  widget.onPreview(asset); // 仍然只传一个参数 ← ← ← 核心
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(5),
+                                  child: Hero(
+                                    tag: "select_page_$filePath",
+                                    child: Image.memory(
+                                      snap.data!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           );
-                        }
-
-                        final filePath = fileSnap.data!.path;
-
-                        return GestureDetector(
-                          onTap: () {
-                            widget.onPreview(asset);     // 仍然只传一个参数 ← ← ← 核心
-                          },
-                          child: Hero(
-                            tag: "select_page_$filePath",
-                            child: Image.memory(
-                              snap.data!,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        },
+                      ),
                       // 半透明遮罩
                       if (isSelected)
-                        Container(color: Colors.black.withOpacity(0.3)),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color.fromRGBO(0, 0, 0, 0.3),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
 
                       // 勾选框（完全阻止事件穿透）
                       Positioned(
