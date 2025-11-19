@@ -84,12 +84,6 @@ class _ImagePickerPageState extends State<ImagePickerPage>
 
   void _showPermissionDialog() {
     showFDialog(
-      routeStyle: context.theme.dialogRouteStyle.copyWith(
-        barrierFilter: (animation) => ImageFilter.compose(
-          outer: ImageFilter.blur(sigmaX: animation * 5, sigmaY: animation * 5),
-          inner: ColorFilter.mode(context.theme.colors.barrier, BlendMode.srcOver),
-        ),
-      ).call,
       context: context,
       builder: (context, style, animation) => FDialog(
         style: style,
@@ -224,12 +218,40 @@ class _ImagePickerPageState extends State<ImagePickerPage>
         ),
         suffixes: [
           FHeaderAction(
+            icon: const Icon(FIcons.trash2),
+            onPress: () async {
+              showFDialog(
+                context: context,
+                builder: (context, style, animation) => FDialog(
+                  style: style,
+                  animation: animation,
+                  direction: Axis.horizontal,
+                  title: const Text('清空图片'),
+                  body: const Text('是否清空已选图片？'),
+                  actions: [
+                    FButton(
+                      style: FButtonStyle.outline(),
+                      onPress: () => Navigator.of(context).pop(),
+                      child: const Text('取消'),
+                    ),
+                    FButton(
+                      onPress: () {
+                        Navigator.of(context).pop();
+                        provider.setSelected([]);
+                      },
+                      child: const Text('清空'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          FHeaderAction(
             icon: const Icon(FIcons.scanQrCode),
             onPress: () async {
               if (!await _checkPermission()) {
                 return;
               }
-
               _showScanOptions();
             },
           ),

@@ -78,6 +78,13 @@ class WatermarkApp extends StatelessWidget {
                 .call,
           )
           .call,
+
+      dialogRouteStyle: baseTheme.dialogRouteStyle.copyWith(
+        barrierFilter: (animation) => ImageFilter.compose(
+          outer: ImageFilter.blur(sigmaX: animation * 5, sigmaY: animation * 5),
+          inner: ColorFilter.mode(baseTheme.colors.barrier, BlendMode.srcOver),
+        ),
+      ).call
     );
 
     return MultiProvider(
