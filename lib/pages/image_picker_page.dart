@@ -28,7 +28,93 @@ class ImagePickerPage extends StatefulWidget {
   State<ImagePickerPage> createState() => _ImagePickerPageState();
 }
 
-class _ImagePickerPageState extends State<ImagePickerPage> {
+class _ImagePickerPageState extends State<ImagePickerPage>
+    with RouteAware, WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 监听 App 生命周期（解决跳系统设置以后不触发 didPopNext 的问题）
+    WidgetsBinding.instance.addObserver(this);
+
+    // 页面首次渲染完成后检查权限
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPermission(reason: "initState");
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Flutter 页面返回时触发（仅对 Flutter 页面有效）
+  @override
+  void didPopNext() {
+    _checkPermission(reason: "didPopNext（Flutter 路由返回）");
+  }
+
+  /// App 返回前台时触发（解决跳系统设置不进入 didPopNext 的问题）
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermission(reason: "AppLifecycle resumed（从系统设置返回）");
+    }
+  }
+
+  Future<bool> _checkPermission({reason}) async {
+    final hasPermission = await StoragePermissionUtil.hasAllFilesPermission();
+    print("权限检查：$reason → $hasPermission");
+
+    if (!hasPermission) {
+      _showPermissionDialog();
+    }
+
+    return hasPermission;
+  }
+
+  void _showPermissionDialog() {
+    showFDialog(
+      routeStyle: context.theme.dialogRouteStyle.copyWith(
+        barrierFilter: (animation) => ImageFilter.compose(
+          outer: ImageFilter.blur(sigmaX: animation * 5, sigmaY: animation * 5),
+          inner: ColorFilter.mode(context.theme.colors.barrier, BlendMode.srcOver),
+        ),
+      ).call,
+      context: context,
+      builder: (context, style, animation) => FDialog(
+        style: style,
+        animation: animation,
+        direction: Axis.horizontal,
+        title: const Text('权限不足'),
+        body: const Text('保存图片需要文件权限，是否打开设置？'),
+        actions: [
+          FButton(
+            style: FButtonStyle.outline(),
+            onPress: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FButton(
+            onPress: () {
+              Navigator.of(context).pop();
+              StoragePermissionUtil.openManageAllFilesSettings();
+            },
+            child: const Text('去设置'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _scanWithCamera() async {
     Navigator.of(
       context,
@@ -45,11 +131,6 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             prefix: Icon(FIcons.image),
             title: const Text('从相册识别二维码'),
             onPress: () async {
-              if (!await StoragePermissionUtil.hasImageAccessPermission()) {
-                StoragePermissionUtil.requestImageAccessPermission();
-                return;
-              }
-
               Navigator.pop(context);
               final selectedPaths = await showImagePicker(
                 context,
@@ -144,7 +225,13 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
         suffixes: [
           FHeaderAction(
             icon: const Icon(FIcons.scanQrCode),
-            onPress: _showScanOptions,
+            onPress: () async {
+              if (!await _checkPermission()) {
+                return;
+              }
+
+              _showScanOptions();
+            },
           ),
         ],
       ),
@@ -216,8 +303,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 // 添加图片按钮
                 return GestureDetector(
                   onTap: () async {
-                    if (!await StoragePermissionUtil.hasImageAccessPermission()) {
-                      StoragePermissionUtil.requestImageAccessPermission();
+                    if (!await _checkPermission()) {
                       return;
                     }
 

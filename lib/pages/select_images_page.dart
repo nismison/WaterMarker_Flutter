@@ -32,12 +32,6 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
   }
 
   Future<void> _fetchAssets() async {
-    final permission = await PhotoManager.requestPermissionExtend();
-    if (!permission.isAuth) {
-      await PhotoManager.openSetting();
-      return;
-    }
-
     final albums = await PhotoManager.getAssetPathList(
       onlyAll: true,
       type: RequestType.image,
