@@ -14,6 +14,7 @@ Future<void> showImagePreview(
       List<String>? imageList,
       bool useHero = false,
       String? tagPrefix = 'preview',
+      Uint8List? thumb,
       Duration fadeDuration = const Duration(milliseconds: 150),
     }) async {
   if (imageList == null && imagePath == null) {
@@ -38,6 +39,7 @@ Future<void> showImagePreview(
         initialIndex: initialIndex,
         useHero: useHero,
         tagPrefix: tagPrefix,
+        thumbnail: thumb,
       ),
       transitionsBuilder: (_, animation, _, child) {
         return FadeTransition(
@@ -56,6 +58,7 @@ class AdvancedImagePreviewPage extends StatefulWidget {
   final String? tagPrefix;
   final int initialIndex;
   final bool useHero;
+  final Uint8List? thumbnail;
 
   const AdvancedImagePreviewPage({
     super.key,
@@ -64,6 +67,7 @@ class AdvancedImagePreviewPage extends StatefulWidget {
     this.initialIndex = 0,
     this.useHero = false,
     this.tagPrefix = 'preview',
+    this.thumbnail,
   });
 
   @override

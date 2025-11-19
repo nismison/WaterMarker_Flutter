@@ -101,8 +101,8 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
       child: AssetGridView(
         selectedIds: _selectedIds,
         maxSelection: widget.maxSelection,
-        onPreview: _previewImage, // 点击图片
-        onSelect: _toggleSelection, // 点击勾选框
+        onPreview: _previewImage,
+        onToggleSelect: _toggleSelection,
       ),
     );
   }
