@@ -1,23 +1,50 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
-import 'router.dart';
+
+import 'providers/app_config_provider.dart';
 import 'providers/image_picker_provider.dart';
 import 'utils/http/http_client.dart';
+import 'router.dart';
 
-// 全局 RouteObserver，用于监听页面返回事件（RouteAware）
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   AppRouter.setupRouter();
 
-  // 设置 BaseUrl
+  // 设置后端 BaseUrl
   HttpClient.setBaseUrl("https://api.zytsy.icu");
 
-  runApp(const WatermarkApp());
+  // 初始化 AppConfigProvider 并加载本地缓存
+  final appConfigProvider = AppConfigProvider();
+  await appConfigProvider.loadLocalConfig();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppConfigProvider>(
+          create: (_) => appConfigProvider,
+        ),
+        ChangeNotifierProvider<ImagePickerProvider>(
+          create: (_) => ImagePickerProvider(),
+        ),
+      ],
+      child: const WatermarkApp(),
+    ),
+  );
+
+  /// UI 构建完毕后再请求远端配置
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await appConfigProvider.refreshConfig();
+    } catch (e) {
+      debugPrint("AppConfig: 远端配置刷新失败，已回退至本地缓存: $e");
+    }
+  });
 }
 
 class WatermarkApp extends StatelessWidget {
@@ -27,9 +54,7 @@ class WatermarkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final baseTheme = FThemes.zinc.light;
 
-    // 自定义主题样式
     final theme = baseTheme.copyWith(
-      // tielGroupItem 增加边距
       tileGroupStyle: baseTheme.tileGroupStyle
           .copyWith(
             tileStyle: baseTheme.tileGroupStyle.tileStyle
@@ -37,7 +62,7 @@ class WatermarkApp extends StatelessWidget {
                   decoration: baseTheme.tileGroupStyle.tileStyle.decoration,
                   contentStyle: baseTheme.tileGroupStyle.tileStyle.contentStyle
                       .copyWith(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           vertical: 20,
                           horizontal: 15,
                         ),
@@ -47,8 +72,6 @@ class WatermarkApp extends StatelessWidget {
                 .call,
           )
           .call,
-
-      // modalSheet 添加模糊
       modalSheetStyle: baseTheme.modalSheetStyle
           .copyWith(
             barrierFilter: (animation) => ImageFilter.compose(
@@ -63,45 +86,48 @@ class WatermarkApp extends StatelessWidget {
             ),
           )
           .call,
-
-      // scaffold 添加边距
       scaffoldStyle: FScaffoldStyle(
-        systemOverlayStyle: SystemUiOverlayStyle(),
+        systemOverlayStyle: const SystemUiOverlayStyle(),
         backgroundColor: Colors.white,
         sidebarBackgroundColor: Colors.white,
         childPadding: EdgeInsetsGeometry.zero,
-        footerDecoration: BoxDecoration(),
+        footerDecoration: const BoxDecoration(),
       ).call,
-
-      // header 添加边距
       headerStyles: baseTheme.headerStyles
           .copyWith(
             rootStyle: baseTheme.headerStyles.rootStyle
                 .copyWith(
-                  padding: EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 5,
+                    horizontal: 15,
+                  ),
                 )
                 .call,
           )
           .call,
-
-      dialogRouteStyle: baseTheme.dialogRouteStyle.copyWith(
-        barrierFilter: (animation) => ImageFilter.compose(
-          outer: ImageFilter.blur(sigmaX: animation * 5, sigmaY: animation * 5),
-          inner: ColorFilter.mode(baseTheme.colors.barrier, BlendMode.srcOver),
-        ),
-      ).call
+      dialogRouteStyle: baseTheme.dialogRouteStyle
+          .copyWith(
+            barrierFilter: (animation) => ImageFilter.compose(
+              outer: ImageFilter.blur(
+                sigmaX: animation * 5,
+                sigmaY: animation * 5,
+              ),
+              inner: ColorFilter.mode(
+                baseTheme.colors.barrier,
+                BlendMode.srcOver,
+              ),
+            ),
+          )
+          .call,
     );
 
-    return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => ImagePickerProvider())],
-      child: MaterialApp(
-        title: '图片选择 Demo',
-        theme: theme.toApproximateMaterialTheme(),
-        builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
-        onGenerateRoute: AppRouter.router.generator,
-        initialRoute: '/',
-        navigatorObservers: [routeObserver],
-      ),
+    return MaterialApp(
+      title: '图片选择 Demo',
+      theme: theme.toApproximateMaterialTheme(),
+      builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
+      onGenerateRoute: AppRouter.router.generator,
+      initialRoute: '/',
+      navigatorObservers: [routeObserver],
     );
   }
 }

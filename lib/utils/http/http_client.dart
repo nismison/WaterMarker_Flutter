@@ -54,20 +54,20 @@ class HttpClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           if (kDebugMode) {
-            debugPrint('===== HTTP REQUEST =====');
-            debugPrint('URL: ${options.uri}');
-            debugPrint('METHOD: ${options.method}');
-            debugPrint('HEADERS: ${jsonEncode(options.headers)}');
-            debugPrint('DATA: ${options.data}');
+            debugPrint('🔵 ===== HTTP REQUEST =====');
+            debugPrint('🌐 URL: ${options.uri}');
+            debugPrint('📝 METHOD: ${options.method}');
+            debugPrint('📦 HEADERS: ${jsonEncode(options.headers)}');
+            debugPrint('📤 DATA: ${options.data}');
           }
           handler.next(options);
         },
         onResponse: (res, handler) {
           if (kDebugMode) {
-            debugPrint('===== HTTP RESPONSE =====');
-            debugPrint('URL: ${res.requestOptions.uri}');
-            debugPrint('STATUS: ${res.statusCode}');
-            debugPrint('DATA: ${res.data}');
+            debugPrint('🟢 ===== HTTP RESPONSE =====');
+            debugPrint('🌐 URL: ${res.requestOptions.uri}');
+            debugPrint('📊 STATUS: ${res.statusCode}');
+            debugPrint('📥 DATA: ${res.data}');
           }
           handler.next(res);
         },

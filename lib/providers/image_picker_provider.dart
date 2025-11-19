@@ -87,7 +87,7 @@ class ImagePickerProvider extends ChangeNotifier {
 
     final storedList = prefs.getString(_userListKey);
     if (storedList == null) {
-      debugPrint("SharedPrefs中无userList，初始化为空列表");
+      debugPrint("SharedPrefs中无用户列表，初始化为空列表");
       await prefs.setString(_userListKey, jsonEncode([])); // 写入空列表
       userList = [];
     } else {
@@ -95,10 +95,10 @@ class ImagePickerProvider extends ChangeNotifier {
         userList = List<Map<String, dynamic>>.from(
           jsonDecode(storedList),
         );
-        debugPrint("SharedPrefs读取到userList: $userList");
+        debugPrint("用户列表加载成功: $userList");
         selectedUser = userList.first;
       } catch (e) {
-        debugPrint("读取userList失败，重置为空列表: $e");
+        debugPrint("用户列表加载失败，重置为空列表: $e");
         userList = [];
       }
     }
