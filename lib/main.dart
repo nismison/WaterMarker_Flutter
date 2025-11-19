@@ -6,12 +6,17 @@ import 'package:forui/forui.dart';
 import 'package:provider/provider.dart';
 import 'router.dart';
 import 'providers/image_picker_provider.dart';
+import 'utils/http/http_client.dart';
 
 // 全局 RouteObserver，用于监听页面返回事件（RouteAware）
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
 void main() {
   AppRouter.setupRouter();
+
+  // 设置 BaseUrl
+  HttpClient.setBaseUrl("https://api.zytsy.icu");
+
   runApp(const WatermarkApp());
 }
 
