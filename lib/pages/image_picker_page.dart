@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
+
 import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
-import '../main.dart';
+
 import '../providers/image_picker_provider.dart';
 import '../utils/image_picker_helper.dart';
 import '../utils/loading_manager.dart';
@@ -28,87 +28,15 @@ class ImagePickerPage extends StatefulWidget {
   State<ImagePickerPage> createState() => _ImagePickerPageState();
 }
 
-class _ImagePickerPageState extends State<ImagePickerPage>
-    with RouteAware, WidgetsBindingObserver {
-
+class _ImagePickerPageState extends State<ImagePickerPage> {
   @override
   void initState() {
     super.initState();
-
-    // 监听 App 生命周期（解决跳系统设置以后不触发 didPopNext 的问题）
-    WidgetsBinding.instance.addObserver(this);
-
-    // 页面首次渲染完成后检查权限
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPermission(reason: "initState");
-    });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
-  }
-
-  @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  /// Flutter 页面返回时触发（仅对 Flutter 页面有效）
-  @override
-  void didPopNext() {
-    _checkPermission(reason: "didPopNext（Flutter 路由返回）");
-  }
-
-  /// App 返回前台时触发（解决跳系统设置不进入 didPopNext 的问题）
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkPermission(reason: "AppLifecycle resumed（从系统设置返回）");
-    }
-  }
-
-  Future<bool> _checkPermission({reason}) async {
-    final hasPermission = await StoragePermissionUtil.hasAllFilesPermission();
-    print("权限检查：$reason → $hasPermission");
-
-    if (!hasPermission) {
-      _showPermissionDialog();
-    }
-
-    return hasPermission;
-  }
-
-  void _showPermissionDialog() {
-    showFDialog(
-      context: context,
-      builder: (context, style, animation) => FDialog(
-        style: style,
-        animation: animation,
-        direction: Axis.horizontal,
-        title: const Text('权限不足'),
-        body: const Text('保存图片需要文件权限，是否打开设置？'),
-        actions: [
-          FButton(
-            style: FButtonStyle.outline(),
-            onPress: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          FButton(
-            onPress: () {
-              Navigator.of(context).pop();
-              StoragePermissionUtil.openManageAllFilesSettings();
-            },
-            child: const Text('去设置'),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ----------------------------------------------------------------------
+  // QR 扫码（原逻辑不变）
+  // ----------------------------------------------------------------------
   Future<void> _scanWithCamera() async {
     Navigator.of(
       context,
@@ -126,18 +54,25 @@ class _ImagePickerPageState extends State<ImagePickerPage>
             title: const Text('从相册识别二维码'),
             onPress: () async {
               Navigator.pop(context);
+              // 必须检查媒体权限
+              if (!(await AppPermissions.hasGalleryPermission())) {
+                Fluttertoast.showToast(
+                  msg: "没有媒体权限",
+                  backgroundColor: Colors.red,
+                );
+                AppPermissions.ensureGalleryPermission();
+                return;
+              }
+
               final selectedPaths = await showImagePicker(
                 context,
                 maxSelection: 1,
               );
+              if (selectedPaths == null || selectedPaths.isEmpty) return;
 
-              if (selectedPaths == null) {
-                return;
-              }
+              final path = selectedPaths[0];
+              final result = await QrCodeToolsPlugin.decodeFrom(path);
 
-              final result = await QrCodeToolsPlugin.decodeFrom(
-                selectedPaths[0],
-              );
               if (!mounted) return;
 
               if (result != null && result.trim().isNotEmpty) {
@@ -153,12 +88,8 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                 final name = decrypted["n"];
                 final number = decrypted["s"];
 
-                // 获取 Provider
-                final provider = Provider.of<ImagePickerProvider>(
-                  context,
-                  listen: false,
-                );
-                // 判断是否存在
+                final provider = context.read<ImagePickerProvider>();
+
                 final exists = provider.userList.any(
                   (item) => item["number"] == number,
                 );
@@ -184,14 +115,17 @@ class _ImagePickerPageState extends State<ImagePickerPage>
             },
           ),
           FTile(
-            prefix: Icon(FIcons.image),
+            prefix: Icon(FIcons.camera),
             title: const Text('打开相机扫描二维码'),
             onPress: () async {
-              if (!await StoragePermissionUtil.hasCameraPermission()) {
-                StoragePermissionUtil.requestCameraPermission();
+              if (!await AppPermissions.hasCameraPermission()) {
+                Fluttertoast.showToast(
+                  msg: "没有相机权限",
+                  backgroundColor: Colors.red,
+                );
+                AppPermissions.ensureCameraPermission();
                 return;
               }
-
               Navigator.pop(context);
               _scanWithCamera();
             },
@@ -201,6 +135,9 @@ class _ImagePickerPageState extends State<ImagePickerPage>
     );
   }
 
+  // ----------------------------------------------------------------------
+  // UI 主体（大部分代码保持不变）
+  // ----------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ImagePickerProvider>();
@@ -212,18 +149,16 @@ class _ImagePickerPageState extends State<ImagePickerPage>
 
     return FScaffold(
       header: FHeader.nested(
-        title: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [const Text('水印生成器2.0')],
-        ),
+        title: const Row(children: [Text('水印生成器2.0')]),
         suffixes: [
+          // 清空按钮不变
           FHeaderAction(
             icon: const Icon(FIcons.trash2),
             onPress: () async {
               showFDialog(
                 context: context,
                 builder: (context, style, animation) => FDialog(
-                  style: style,
+                  style: style.call,
                   animation: animation,
                   direction: Axis.horizontal,
                   title: const Text('清空图片'),
@@ -246,21 +181,23 @@ class _ImagePickerPageState extends State<ImagePickerPage>
               );
             },
           ),
+
+          // 扫码按钮
           FHeaderAction(
             icon: const Icon(FIcons.scanQrCode),
             onPress: () async {
-              if (!await _checkPermission()) {
-                return;
-              }
               _showScanOptions();
             },
           ),
         ],
       ),
+
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // 图片 Grid
+          // -------------------------------------------------------------------
+          // 图片 grid
+          // -------------------------------------------------------------------
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -270,9 +207,10 @@ class _ImagePickerPageState extends State<ImagePickerPage>
               crossAxisCount: 3,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 1, // 1:1
+              childAspectRatio: 1,
             ),
             itemBuilder: (_, index) {
+              // 已选图片（原逻辑不动）
               if (index < provider.pickedImages.length) {
                 final img = provider.pickedImages[index];
                 return Stack(
@@ -322,47 +260,51 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                     ),
                   ],
                 );
-              } else {
-                // 添加图片按钮
-                return GestureDetector(
-                  onTap: () async {
-                    if (!await _checkPermission()) {
-                      return;
-                    }
-
-                    final provider = context.read<ImagePickerProvider>();
-                    final selectedPaths = await showImagePicker(
-                      context,
-                      maxSelection: provider.maxImages,
-                      preSelectedPaths: provider.pickedPaths,
-                    );
-
-                    if (selectedPaths == null) {
-                      debugPrint("用户取消了选择");
-                      return;
-                    }
-
-                    provider.setSelected(selectedPaths);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.add, size: 40, color: Colors.grey),
-                    ),
-                  ),
-                );
               }
+
+              // 添加图片按钮
+              return GestureDetector(
+                onTap: () async {
+                  if (!(await AppPermissions.hasGalleryPermission())) {
+                    Fluttertoast.showToast(
+                      msg: "没有媒体权限",
+                      backgroundColor: Colors.red,
+                    );
+                    AppPermissions.ensureGalleryPermission();
+                    return;
+                  }
+
+                  final provider = context.read<ImagePickerProvider>();
+                  final selectedPaths = await showImagePicker(
+                    context,
+                    maxSelection: provider.maxImages,
+                    preSelectedPaths: provider.pickedPaths,
+                  );
+
+                  if (selectedPaths == null) return;
+                  provider.setSelected(selectedPaths);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.add, size: 40, color: Colors.grey),
+                  ),
+                ),
+              );
             },
           ),
+
           const SizedBox(height: 16),
 
+          // -------------------------------------------------------------------
+          // 下面表单项不变
+          // -------------------------------------------------------------------
           FTileGroup(
             divider: FItemDivider.full,
             children: [
-              // 水印日期
               FTile(
                 prefix: const Text('📅'),
                 title: const Text('水印日期'),
@@ -374,8 +316,6 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                   onSelected: provider.updateDate,
                 ),
               ),
-
-              // 水印时间
               FTile(
                 prefix: const Text('🕐'),
                 title: const Text('水印时间'),
@@ -387,8 +327,6 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                   onSelected: provider.updateTime,
                 ),
               ),
-
-              // 用户姓名
               FTile(
                 prefix: const Text('👤'),
                 title: const Text('姓名'),
@@ -402,7 +340,6 @@ class _ImagePickerPageState extends State<ImagePickerPage>
                 ),
               ),
 
-              // 用户编号（锁定，去掉 onPress 和右箭头）
               FTile(
                 prefix: const Icon(FIcons.hash),
                 title: const Text('用户编号'),
@@ -415,6 +352,7 @@ class _ImagePickerPageState extends State<ImagePickerPage>
           ),
 
           const SizedBox(height: 20),
+
           // 生成按钮
           FButton(
             style: context.theme.buttonStyles.primary
@@ -432,12 +370,16 @@ class _ImagePickerPageState extends State<ImagePickerPage>
             onPress: () => _handleGenerate(provider),
             child: const Text('生成水印'),
           ),
+
           const SizedBox(height: 40),
         ],
       ),
     );
   }
 
+  // ----------------------------------------------------------------------
+  // 生成水印（原逻辑保持不变）
+  // ----------------------------------------------------------------------
   void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
       Fluttertoast.showToast(msg: "请先选择至少一张图片", backgroundColor: Colors.red);
@@ -450,8 +392,8 @@ class _ImagePickerPageState extends State<ImagePickerPage>
 
     final DateTime datetime = provider.combinedDateTime;
     final String userNumber = provider.selectedUserNumber;
-    // selectedUser 是 Map<String, dynamic>
     final String name = (provider.selectedUser!['name'] ?? '').toString();
+
     final List<String> watermarkedPaths = [];
 
     final loading = GlobalLoading();
@@ -485,7 +427,7 @@ class _ImagePickerPageState extends State<ImagePickerPage>
 
     loading.hide();
     debugPrint("全部图片生成完成");
-    // 跳转预览页面
+
     if (context.mounted) {
       Navigator.push(
         context,

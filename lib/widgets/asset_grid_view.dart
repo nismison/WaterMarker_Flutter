@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:flutter/gestures.dart';
 import 'package:forui/assets.dart';
 
 class AssetGridView extends StatefulWidget {
+  final AssetPathEntity album; // ★ 直接接收主相册
   final List<String> selectedIds;
   final int maxSelection;
   final void Function(AssetEntity asset) onPreview;
@@ -13,6 +14,7 @@ class AssetGridView extends StatefulWidget {
 
   const AssetGridView({
     super.key,
+    required this.album,
     required this.selectedIds,
     required this.maxSelection,
     required this.onPreview,
@@ -27,40 +29,30 @@ class _AssetGridViewState extends State<AssetGridView> {
   final List<AssetEntity> _assets = [];
   final Map<String, Uint8List?> _thumbCache = {};
 
-  int? _lastDragIndex;
-
-  AssetPathEntity? _gallery;
   int _page = 0;
   bool _loading = false;
   bool _hasMore = true;
 
   static const int pageSize = 120;
+  int? _lastDragIndex;
 
   @override
   void initState() {
     super.initState();
-    _loadGallery();
-  }
-
-  Future<void> _loadGallery() async {
-    final perm = await PhotoManager.requestPermissionExtend();
-    if (!perm.isAuth) return;
-
-    final paths = await PhotoManager.getAssetPathList(
-      onlyAll: true,
-      type: RequestType.image,
-    );
-    if (paths.isEmpty) return;
-
-    _gallery = paths.first;
     _loadNextPage();
   }
 
+  // ============================================================
+  // ★ 分页加载（不再扫描相册）
+  // ============================================================
   Future<void> _loadNextPage() async {
     if (_loading || !_hasMore) return;
     _loading = true;
 
-    final list = await _gallery!.getAssetListPaged(page: _page, size: pageSize);
+    final list = await widget.album.getAssetListPaged(
+      page: _page,
+      size: pageSize,
+    );
 
     if (list.isEmpty) {
       _hasMore = false;
@@ -68,12 +60,12 @@ class _AssetGridViewState extends State<AssetGridView> {
       _assets.addAll(list);
       _page++;
     }
-    _loading = false;
 
+    _loading = false;
     if (mounted) setState(() {});
   }
 
-  Future<Uint8List?> _loadThumb(AssetEntity asset) async {
+  Future<Uint8List?> _thumb(AssetEntity asset) async {
     if (_thumbCache.containsKey(asset.id)) return _thumbCache[asset.id];
     final data = await asset.thumbnailDataWithSize(
       const ThumbnailSize(300, 300),
@@ -82,22 +74,19 @@ class _AssetGridViewState extends State<AssetGridView> {
     return data;
   }
 
-  int? _getIndexFromOffset(Offset position, Size gridSize) {
-    final itemWidth = gridSize.width / 3;
-    final col = position.dx ~/ itemWidth;
-    final row = position.dy ~/ itemWidth;
+  int? _indexFromOffset(Offset pos, Size gridSize) {
+    final w = gridSize.width / 3;
+    final col = pos.dx ~/ w;
+    final row = pos.dy ~/ w;
     final index = row * 3 + col;
-    if (index >= 0 && index < _assets.length) {
-      return index;
-    }
-    return null;
+    return (index >= 0 && index < _assets.length) ? index : null;
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
-        final Size gridSize = constraints.biggest;
+        final size = constraints.biggest;
 
         return RawGestureDetector(
           gestures: {
@@ -107,29 +96,29 @@ class _AssetGridViewState extends State<AssetGridView> {
                 >(() => HorizontalDragGestureRecognizer(), (
                   HorizontalDragGestureRecognizer instance,
                 ) {
-                  instance.onStart = (details) {};
+                  instance
+                    ..onStart = (_) {}
+                    ..onUpdate = (details) {
+                      final pos = details.localPosition;
+                      final index = _indexFromOffset(pos, size);
 
-                  instance.onUpdate = (details) {
-                    final pos = details.localPosition;
-                    final index = _getIndexFromOffset(pos, gridSize);
-                    if (index != null && index != _lastDragIndex) {
-                      _lastDragIndex = index;
+                      if (index != null && index != _lastDragIndex) {
+                        _lastDragIndex = index;
 
-                      final asset = _assets[index];
-                      final already = widget.selectedIds.contains(asset.id);
-                      final canSelect =
-                          already ||
-                          widget.selectedIds.length < widget.maxSelection;
+                        final asset = _assets[index];
+                        final already = widget.selectedIds.contains(asset.id);
+                        final allowed =
+                            already ||
+                            widget.selectedIds.length < widget.maxSelection;
 
-                      if (canSelect) {
-                        widget.onToggleSelect(asset);
+                        if (allowed) {
+                          widget.onToggleSelect(asset);
+                        }
                       }
                     }
-                  };
-
-                  instance.onEnd = (_) {
-                    _lastDragIndex = null;
-                  };
+                    ..onEnd = (_) {
+                      _lastDragIndex = null;
+                    };
                 }),
           },
 
@@ -142,7 +131,7 @@ class _AssetGridViewState extends State<AssetGridView> {
             },
 
             child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 mainAxisSpacing: 4,
@@ -151,64 +140,61 @@ class _AssetGridViewState extends State<AssetGridView> {
               itemCount: _assets.length,
               itemBuilder: (_, i) {
                 final asset = _assets[i];
-                final isSelected = widget.selectedIds.contains(asset.id);
+                final selected = widget.selectedIds.contains(asset.id);
 
-                // 选中项永远允许点击（用于取消）
-                // 未选项在达到上限后禁用
-                final bool canSelect =
-                    isSelected ||
-                    widget.selectedIds.length < widget.maxSelection;
+                final allowed =
+                    selected || widget.selectedIds.length < widget.maxSelection;
 
                 return AnimatedScale(
-                  scale: isSelected ? 0.92 : 1.0,
+                  scale: selected ? 0.92 : 1.0,
                   duration: const Duration(milliseconds: 120),
                   curve: Curves.easeOut,
                   child: Stack(
-                    fit: StackFit.expand,
+                    fit: StackFit.expand, // ★ 关键：让子内容填满 1:1 格子
                     children: [
-                      // 缩略图 + 预览
+                      // 缩略图 + Hero + 点击预览
                       FutureBuilder<Uint8List?>(
-                        future: _loadThumb(asset),
+                        future: _thumb(asset),
                         builder: (_, snap) {
                           if (!snap.hasData) {
                             return Container(color: Colors.grey.shade200);
                           }
+                          final bytes = snap.data!;
 
-                          // 再取 filePath（为 Hero tag 服务）
+                          // 这里再拿一次 file 只是为了 Hero tag 和预览的一致性
                           return FutureBuilder<File?>(
                             future: asset.file,
                             builder: (_, fileSnap) {
-                              if (!fileSnap.hasData) {
-                                // 没有 filePath 时先显示 thumbnail
-                                return Image.memory(
-                                  snap.data!,
-                                  fit: BoxFit.cover,
-                                );
+                              final file = fileSnap.data;
+                              // 如果拿不到 filePath，就不用 Hero，只展示缩略图
+                              final String? heroTag = file == null
+                                  ? null
+                                  : 'select_page_${file.path}';
+
+                              Widget image = Image.memory(
+                                bytes,
+                                fit: BoxFit.cover,
+                              );
+
+                              if (heroTag != null) {
+                                image = Hero(tag: heroTag, child: image);
                               }
 
-                              final filePath = fileSnap.data!.path;
-
                               return GestureDetector(
-                                onTap: () {
-                                  widget.onPreview(asset); // 仍然只传一个参数 ← ← ← 核心
-                                },
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => widget.onPreview(asset),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(5),
-                                  child: Hero(
-                                    tag: "select_page_$filePath",
-                                    child: Image.memory(
-                                      snap.data!,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
+                                  child: image,
                                 ),
                               );
                             },
                           );
                         },
                       ),
-                      // 半透明遮罩
-                      if (isSelected)
+
+                      // 选中遮罩
+                      if (selected)
                         Container(
                           decoration: BoxDecoration(
                             color: const Color.fromRGBO(0, 0, 0, 0.3),
@@ -216,35 +202,33 @@ class _AssetGridViewState extends State<AssetGridView> {
                           ),
                         ),
 
-                      // 勾选框（完全阻止事件穿透）
+                      // 勾选圆点
                       Positioned(
                         top: 4,
                         right: 4,
                         child: GestureDetector(
-                          behavior: HitTestBehavior.opaque, // ★ 不穿透
-                          onTap: () {
-                            if (canSelect) widget.onToggleSelect(asset);
-                          },
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () =>
+                              allowed ? widget.onToggleSelect(asset) : null,
                           child: Container(
-                            width: 32,
-                            height: 32,
+                            width: 28,
+                            height: 28,
                             alignment: Alignment.center,
                             child: Container(
-                              width: 22,
-                              height: 22,
+                              width: 20,
+                              height: 20,
                               decoration: BoxDecoration(
-                                color: isSelected ? Colors.blue : Colors.white,
+                                color: selected ? Colors.blue : Colors.white,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected ? Colors.blue : Colors.grey,
-                                  width: 1.2,
+                                  color: selected ? Colors.blue : Colors.grey,
                                 ),
                               ),
-                              child: isSelected
+                              child: selected
                                   ? const Icon(
                                       FIcons.check,
-                                      size: 16,
                                       color: Colors.white,
+                                      size: 14,
                                     )
                                   : null,
                             ),

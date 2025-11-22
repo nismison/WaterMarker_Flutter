@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:forui/forui.dart';
 import 'package:photo_manager/photo_manager.dart';
-
 import '../widgets/asset_grid_view.dart';
 import 'advanced_image_preview_page.dart';
 
@@ -21,90 +19,98 @@ class SelectImagesPage extends StatefulWidget {
 
 class _SelectImagesPageState extends State<SelectImagesPage> {
   final List<String> _selectedIds = [];
+  AssetPathEntity? _mainAlbum;
 
   @override
   void initState() {
     super.initState();
-    _initPreSelected();
+    _initGallery();
   }
 
-  /// 将 preSelectedPaths（filePath）映射到 asset.id
-  Future<void> _initPreSelected() async {
-    if (widget.preSelectedPaths.isEmpty) return;
+  // ============================================================
+  // ★ Step1：扫描相册（一次）
+  // ★ Step2：定位主相册（isAll）
+  // ★ Step3：处理预选择路径 → assetId
+  // ============================================================
+  Future<void> _initGallery() async {
+    final perm = await PhotoManager.requestPermissionExtend();
+    if (!perm.isAuth && !perm.hasAccess) return;
 
-    final List<String> filePaths = widget.preSelectedPaths;
-    final List<String> selectedIds = [];
-
-    // 获取最近相册（“所有图片”）
-    final albums = await PhotoManager.getAssetPathList(
-      onlyAll: true,
-      type: RequestType.image,
-    );
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
 
     if (albums.isEmpty) return;
-    final album = albums.first;
 
-    // 每个 filePath 并发查找
-    final futures = filePaths.map((filePath) async {
-      String? matchedId;
+    // 找主相册（图片全部集合）
+    AssetPathEntity? mainAlbum;
+    for (final a in albums) {
+      if (a.isAll) {
+        mainAlbum = a;
+        break;
+      }
+    }
+    _mainAlbum = mainAlbum ?? albums.first;
+
+    if (widget.preSelectedPaths.isNotEmpty) {
+      await _initPreSelected(_mainAlbum!);
+    }
+
+    if (mounted) setState(() {});
+  }
+
+  // ============================================================
+  // ★ 根据 filePath 查找 asset.id（支持预选）
+  // ============================================================
+  Future<void> _initPreSelected(AssetPathEntity album) async {
+    final List<String> resultIds = [];
+
+    for (final fp in widget.preSelectedPaths) {
+      bool found = false;
 
       int page = 0;
       const int pageSize = 100;
 
-      while (true) {
-        final List<AssetEntity> assets = await album.getAssetListPaged(
+      while (!found) {
+        final assets = await album.getAssetListPaged(
           page: page,
           size: pageSize,
         );
-
         if (assets.isEmpty) break;
 
-        for (final asset in assets) {
-          final file = await asset.file;
-          if (file != null && file.path == filePath) {
-            matchedId = asset.id;
+        for (final a in assets) {
+          final f = await a.file;
+          if (f != null && f.path == fp) {
+            resultIds.add(a.id);
+            found = true;
             break;
           }
         }
-
-        if (matchedId != null) break;
         page++;
       }
+    }
 
-      if (matchedId != null) {
-        selectedIds.add(matchedId);
-      }
-    });
-
-    await Future.wait(futures);
-
-    if (!mounted) return;
-
-    setState(() {
-      _selectedIds.addAll(selectedIds);
-    });
+    _selectedIds.addAll(resultIds);
   }
 
-  /// 点击右上角勾选框
-  void _toggleSelection(AssetEntity asset) {
+  // ============================================================
+  // ★ 切换选择
+  // ============================================================
+  void _onToggleSelect(AssetEntity asset) {
     final id = asset.id;
-
     setState(() {
       if (_selectedIds.contains(id)) {
-        // 已选 → 允许取消
         _selectedIds.remove(id);
       } else {
-        // 未选 → 但已经达到上限，直接禁止
-        if (_selectedIds.length >= widget.maxSelection) {
-          return; // 直接阻止，不提示、不报错
+        if (_selectedIds.length < widget.maxSelection) {
+          _selectedIds.add(id);
         }
-        _selectedIds.add(id);
       }
     });
   }
 
-  /// 点击图片 → 预览
-  void _previewImage(AssetEntity asset) async {
+  // ============================================================
+  // ★ 图片预览
+  // ============================================================
+  void _onPreview(AssetEntity asset) async {
     final file = await asset.file;
     if (file == null) return;
 
@@ -112,51 +118,55 @@ class _SelectImagesPageState extends State<SelectImagesPage> {
       context,
       imagePath: file.path,
       useHero: true,
-      tagPrefix: 'select_page',
+      tagPrefix: 'select_page', // 这里是关键，和 Hero tag 前缀要一致
     );
   }
 
-  /// 点击确定按钮 → 返回 filePaths
-  Future<void> _onConfirmPressed() async {
-    final paths = <String>[];
-
+  // ============================================================
+  // ★ 返回 filePath 列表
+  // ============================================================
+  Future<void> _onConfirm() async {
+    final List<String> paths = [];
     for (final id in _selectedIds) {
       final entity = await AssetEntity.fromId(id);
       final file = await entity?.file;
-
-      if (file != null) {
-        paths.add(file.path);
-      }
+      if (file != null) paths.add(file.path);
     }
-
     Navigator.pop(context, paths);
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool hasSelection = _selectedIds.isNotEmpty;
+    final loaded = _mainAlbum != null;
+    final hasSelection = _selectedIds.isNotEmpty;
 
-    return FScaffold(
-      header: FHeader.nested(
-        title: Row(children: const [Text('选择图片')]),
-        prefixes: [FHeaderAction.back(onPress: () => Navigator.pop(context))],
-        suffixes: [
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("选择图片"),
+        actions: [
           TextButton(
-            onPressed: hasSelection ? _onConfirmPressed : null,
+            onPressed: hasSelection ? _onConfirm : null,
             child: Text(
-              '确定 (${_selectedIds.length}/${widget.maxSelection})',
-              style: TextStyle(color: hasSelection ? Colors.blue : Colors.grey),
+              "确定 (${_selectedIds.length}/${widget.maxSelection})",
+              style: TextStyle(
+                color: hasSelection ? Colors.blue : Colors.grey,
+                fontSize: 16,
+              ),
             ),
           ),
         ],
       ),
 
-      child: AssetGridView(
-        selectedIds: _selectedIds,
-        maxSelection: widget.maxSelection,
-        onPreview: _previewImage,
-        onToggleSelect: _toggleSelection,
-      ),
+      body: loaded
+          ? AssetGridView(
+              album: _mainAlbum!,
+              // ★ 只传一次 album
+              selectedIds: _selectedIds,
+              maxSelection: widget.maxSelection,
+              onPreview: _onPreview,
+              onToggleSelect: _onToggleSelect,
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
