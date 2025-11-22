@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/app_config_provider.dart';
 import 'providers/image_picker_provider.dart';
-import 'utils/http/http_client.dart';
+import 'api/http_client.dart';
 import 'router.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();

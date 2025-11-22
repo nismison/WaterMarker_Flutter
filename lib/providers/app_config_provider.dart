@@ -1,21 +1,23 @@
+// lib/providers/app_config_provider.dart
+
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import '../utils/app_config_util.dart';
+
+import '../models/app_config_model.dart';   // 提供 AppConfigModel
+import '../api/app_config_api.dart';      // 提供 AppConfigApi
 
 /// Provider 用于全局维护 AppConfig 状态。
-/// 为什么使用 ChangeNotifier：
-/// - 状态量小（一个配置对象）
-/// - 广播能力足够，无需使用 Riverpod 等更重的方案
-/// - Flutter 官方推荐的小状态模型
 class AppConfigProvider extends ChangeNotifier {
+  final AppConfigApi _api = AppConfigApi();
+
   AppConfigModel? _config;
 
   AppConfigModel? get config => _config;
 
   /// 初始化：优先加载本地缓存，然后可选择发起远端刷新
   Future<void> loadLocalConfig() async {
-    final local = await AppConfigUtil.loadLocalConfig();
+    final local = await _api.loadLocalConfig();
     if (local != null) {
       _config = local;
       debugPrint('AppConfig: 本地配置加载成功: ${jsonEncode(local.toJson())}');
@@ -25,7 +27,7 @@ class AppConfigProvider extends ChangeNotifier {
 
   /// 从远程刷新配置并同步到 Provider
   Future<void> refreshConfig() async {
-    final remote = await AppConfigUtil.fetchAppConfig();
+    final remote = await _api.fetchAppConfig();
     _config = remote;
     debugPrint('AppConfig: 远程配置刷新成功: ${jsonEncode(remote.toJson())}');
     notifyListeners();
