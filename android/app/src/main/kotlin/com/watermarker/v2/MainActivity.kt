@@ -9,6 +9,7 @@ import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 
 class MainActivity : FlutterActivity() {
 
@@ -18,6 +19,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        // ====== 存储权限 Channel ======
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             CHANNEL_PERMISSION
@@ -27,23 +29,45 @@ class MainActivity : FlutterActivity() {
                     openManageAllFilesPermissionPage()
                     result.success(null)
                 }
+                else -> result.notImplemented()
+            }
+        }
 
+        // ====== MediaStore Channel ======
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL_MEDIA_STORE
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "insertImageToMediaStore" -> {
+                    val path = call.argument<String>("path")
+                    if (path == null) {
+                        result.success(false)
+                        return@setMethodCallHandler
+                    }
+                    val ok = insertImageToMediaStore(path)
+                    result.success(ok)
+                }
                 else -> result.notImplemented()
             }
         }
     }
 
-    /** MediaStore 插入逻辑：直接把图片注册到系统图库 */
+    /** MediaStore 插入逻辑：让图片出现在系统相册 */
     private fun insertImageToMediaStore(path: String): Boolean {
         return try {
+            val file = File(path)
+            if (!file.exists()) return false
+
             val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DATA, path)       // 绝对路径
+                put(MediaStore.Images.Media.DATA, path)
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                 put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis() / 1000)
                 put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
             }
 
             contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+
             println(">>> MediaStore 插入成功: $path")
             true
         } catch (e: Exception) {
@@ -52,7 +76,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** 原功能：打开管理所有文件权限 */
+    /** 打开管理所有文件权限 */
     private fun openManageAllFilesPermissionPage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {

@@ -7,7 +7,7 @@ class MediaScanner {
   /// 通知 Android 扫描指定文件，使其立即出现在相册
   ///
   /// :param path: 图片或视频完整路径
-  /// :returns: Future<bool>
+  /// :returns: Future<`bool`>
   static Future<bool> scanFile(String path) async {
     try {
       final bool result = await _channel.invokeMethod('scanFile', {

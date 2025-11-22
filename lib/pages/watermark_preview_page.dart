@@ -5,7 +5,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:water_marker_test2/utils/loading_manager.dart';
 
-import '../utils/storage_permission_util.dart';
 import '../utils/storage_util.dart';
 import 'advanced_image_preview_page.dart';
 
@@ -42,11 +41,6 @@ class WatermarkPreviewPage extends StatelessWidget {
           FHeaderAction(
             icon: const Icon(FIcons.saveAll),
             onPress: () async {
-              if (!await AppPermissions.hasAllFilesPermission()) {
-                AppPermissions.ensureAllFilesPermission();
-                return;
-              }
-
               final loading = GlobalLoading();
 
               try {

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -106,7 +107,7 @@ class AppPermissions {
     try {
       await _channel.invokeMethod("openManageAllFilesPage");
     } catch (e) {
-      print("openManageAllFilesPage 调用失败: $e");
+      debugPrint("openManageAllFilesPage 调用失败: $e");
     }
 
     // 用户从设置返回后再检查一次
