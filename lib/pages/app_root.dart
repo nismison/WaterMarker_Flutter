@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../api/http_client.dart';
 import '../providers/app_config_provider.dart';
+import '../providers/user_provider.dart';
 import '../router.dart';
 import '../services/image_sync_service.dart';
 import '../utils/storage_util.dart';
@@ -62,6 +63,10 @@ class _AppRootState extends State<AppRoot> {
 
   /// App 启动时需要执行的初始化逻辑统一放在这里
   Future<void> _initApp() async {
+    // 0. 获取 Provider
+    final appConfigProvider = context.read<AppConfigProvider>();
+    final userProvider = context.read<UserProvider>();
+
     // 1. 初始化路由
     _splashController.updateMessage('正在初始化...');
     AppRouter.setupRouter();
@@ -72,10 +77,14 @@ class _AppRootState extends State<AppRoot> {
 
     // 3. 加载 App 配置
     _splashController.updateMessage('正在加载配置...');
-    final appConfigProvider = context.read<AppConfigProvider>();
     await _loadAppConfig(appConfigProvider);
 
-    // 4. 初始化完成后，启动图片同步（不阻塞 Splash 动画）
+    // 4. 获取用户列表
+    _splashController.updateMessage('正在加载用户列表...');
+    await userProvider.fetchUserList();
+    debugPrint('用户列表: ${userProvider.users}');
+
+    // 5. 初始化完成后，启动图片同步（不阻塞 Splash 动画）
     _startScanImages();
   }
 
@@ -108,7 +117,7 @@ class _AppRootState extends State<AppRoot> {
 
     /// 测试模式：只压接口，不动 SQLite
     /// 正常模式：带本地索引的增量同步
-    const isTest = true;
+    const isTest = false;
     const isUpload = false;
 
     final prodService = ImageSyncService(isTest: isTest, isUpload: isUpload);

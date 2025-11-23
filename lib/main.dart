@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:water_marker_test2/providers/user_provider.dart';
 
 import 'providers/app_config_provider.dart';
 import 'providers/image_picker_provider.dart';
@@ -19,6 +20,7 @@ Future<void> main() async {
         ChangeNotifierProvider<ImagePickerProvider>(
           create: (_) => ImagePickerProvider(),
         ),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: const AppRoot(),
     ),
