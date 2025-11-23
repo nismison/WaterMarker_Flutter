@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_info_model.dart';
 
@@ -13,8 +10,6 @@ class ImagePickerProvider extends ChangeNotifier {
 
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
-
-  static const String _userListKey = 'userList';
 
   List<Map<String, dynamic>> userList = [];
 
