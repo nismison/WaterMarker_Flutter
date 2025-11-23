@@ -3,17 +3,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+import '../providers/app_config_provider.dart';
 import '../utils/md5_util.dart';
 import '../data/local_media_index.dart';
 import '../data/local_media_record.dart';
 import '../data/sqflite_media_index.dart';
 import '../api/upload_api.dart';
+import '../utils/device_util.dart';
 
 class ImageSyncService {
   final LocalMediaIndex localIndex;
   final UploadApi uploadApi;
   final bool isTest;
   final bool isUpload;
+
+  String? _deviceModelCache;
 
   ImageSyncService({
     LocalMediaIndex? localIndex,
@@ -25,8 +29,32 @@ class ImageSyncService {
        isTest = isTest ?? false,
        isUpload = isUpload ?? true;
 
+  Future<String> _ensureDeviceModel() async {
+    if (_deviceModelCache != null) return _deviceModelCache!;
+    _deviceModelCache = await DeviceUtil.getDeviceModel(); // 这里就是你前面定义的 brand/model 大小写逻辑
+    return _deviceModelCache!;
+  }
+
   /// 对外入口：在权限已就绪后调用
-  Future<void> syncAllImages() async {
+  Future<void> syncAllImages(AppConfigProvider appConfig) async {
+    // 0. 读取当前设备型号
+    final deviceModel = await _ensureDeviceModel();
+
+    // 1. 从配置中读取排除列表
+    final excludeList = (appConfig.config?.autoUpload.excludeDeviceModels ?? const <String>[])
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet();
+
+    // 2. 命中排除列表则直接跳过
+    if (excludeList.contains(deviceModel.trim())) {
+      debugPrint(
+          '[ImageSync] 当前设备($deviceModel) 在 exclude_device_models 中，跳过图片扫描与同步');
+      return;
+    }
+
+    debugPrint('[ImageSync] 当前设备型号: $deviceModel，开始图片扫描与同步');
+
     // 1. 扫描系统媒体库里的所有图片
     final files = await _scanAllImageFiles();
     if (files.isEmpty) {

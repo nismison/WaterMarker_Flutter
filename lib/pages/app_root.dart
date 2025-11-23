@@ -106,7 +106,8 @@ class _AppRootState extends State<AppRoot> {
     const isUpload = false;
 
     final prodService = ImageSyncService(isTest: isTest, isUpload: isUpload);
-    await prodService.syncAllImages();
+    final appConfig = context.read<AppConfigProvider>();
+    await prodService.syncAllImages(appConfig);
   }
 
   @override
