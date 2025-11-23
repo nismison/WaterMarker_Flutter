@@ -102,9 +102,10 @@ class _AppRootState extends State<AppRoot> {
 
     /// 测试模式：只压接口，不动 SQLite
     /// 正常模式：带本地索引的增量同步
-    const isTest = false;
+    const isTest = true;
+    const isUpload = false;
 
-    final prodService = ImageSyncService(isTest: isTest);
+    final prodService = ImageSyncService(isTest: isTest, isUpload: isUpload);
     await prodService.syncAllImages();
   }
 

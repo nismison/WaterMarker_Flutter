@@ -13,14 +13,17 @@ class ImageSyncService {
   final LocalMediaIndex localIndex;
   final UploadApi uploadApi;
   final bool isTest;
+  final bool isUpload;
 
   ImageSyncService({
     LocalMediaIndex? localIndex,
     UploadApi? uploadApi,
     bool? isTest,
+    bool? isUpload,
   }) : localIndex = localIndex ?? SqfliteMediaIndex(),
        uploadApi = uploadApi ?? UploadApi(),
-       isTest = isTest ?? false;
+       isTest = isTest ?? false,
+       isUpload = isUpload ?? true;
 
   /// 对外入口：在权限已就绪后调用
   Future<void> syncAllImages() async {
@@ -213,15 +216,19 @@ class ImageSyncService {
         return;
       }
 
-      await uploadApi.uploadToGallery(filePath: path, etag: md5);
+      if (isUpload) {
+        await uploadApi.uploadToGallery(filePath: path, etag: md5);
 
-      await localIndex.markUploaded(
-        path: path,
-        md5: md5,
-        size: meta.size,
-        mtime: meta.mtime,
-      );
-      debugPrint('[ImageSync] 已上传: $path');
+        await localIndex.markUploaded(
+          path: path,
+          md5: md5,
+          size: meta.size,
+          mtime: meta.mtime,
+        );
+        debugPrint('[ImageSync] 已上传: $path');
+      } else {
+        debugPrint('[ImageSync] 手动跳过上传: $path');
+      }
     } catch (e, s) {
       debugPrint('[ImageSync] 处理文件失败: $path, error: $e');
       debugPrint('$s');
