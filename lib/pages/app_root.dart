@@ -94,6 +94,12 @@ class _AppRootState extends State<AppRoot> {
 
   /// 原来的 startScanImages 逻辑，搬到这里统一管理
   Future<void> _startScanImages() async {
+    final appConfig = context.read<AppConfigProvider>();
+    if (!appConfig.config!.autoUpload.imageEnable) {
+      return;
+    }
+
+    // 检查文件访问权限
     final hasAll = await StorageUtil.hasAllFilesAccess();
     if (!hasAll) {
       _splashController.updateMessage('未授予文件访问权限，跳过自动同步');
@@ -106,10 +112,7 @@ class _AppRootState extends State<AppRoot> {
     const isUpload = false;
 
     final prodService = ImageSyncService(isTest: isTest, isUpload: isUpload);
-    final appConfig = context.read<AppConfigProvider>();
-    if (appConfig.config!.autoUpload.imageEnable) {
-      await prodService.syncAllImages(appConfig);
-    }
+    await prodService.syncAllImages(appConfig);
   }
 
   @override

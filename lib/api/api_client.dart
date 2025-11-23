@@ -9,7 +9,7 @@ abstract class ApiClient {
   /// 统一处理：
   /// - DioException
   /// - 后端 success=false
-  /// - 抽取 data 字段为 Map<String, dynamic>
+  /// - 抽取 data 字段为 Map< String, dynamic >
   Future<Map<String, dynamic>> safeCall(
     Future<Response> Function() request,
   ) async {

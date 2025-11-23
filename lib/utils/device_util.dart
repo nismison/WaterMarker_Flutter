@@ -19,8 +19,8 @@ class DeviceUtil {
         final android = await _deviceInfo.androidInfo;
 
         // 原始值
-        final rawBrand = (android.brand ?? '').trim();
-        final rawModel = (android.model ?? '').trim();
+        final rawBrand = (android.brand).trim();
+        final rawModel = (android.model).trim();
 
         // 规范化：
         // brand 全小写，如 "xiaomi" / "huawei"
@@ -41,8 +41,8 @@ class DeviceUtil {
 
       if (Platform.isIOS) {
         final ios = await _deviceInfo.iosInfo;
-        final name = (ios.name ?? '').trim(); // 设备名
-        final machine = (ios.utsname.machine ?? '').trim(); // 硬件型号 "iPhone16,2"
+        final name = (ios.name).trim(); // 设备名
+        final machine = (ios.utsname.machine).trim(); // 硬件型号 "iPhone16,2"
 
         // iOS 这边我保持原样，不做大小写转换，如需也统一可以再调
         if (name.isNotEmpty && machine.isNotEmpty) {
