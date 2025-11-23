@@ -107,7 +107,9 @@ class _AppRootState extends State<AppRoot> {
 
     final prodService = ImageSyncService(isTest: isTest, isUpload: isUpload);
     final appConfig = context.read<AppConfigProvider>();
-    await prodService.syncAllImages(appConfig);
+    if (appConfig.config!.autoUpload.imageEnable) {
+      await prodService.syncAllImages(appConfig);
+    }
   }
 
   @override
