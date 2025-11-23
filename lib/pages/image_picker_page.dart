@@ -11,6 +11,7 @@ import 'package:water_marker_test2/pages/qr_scan_page.dart';
 import 'package:water_marker_test2/pages/watermark_preview_page.dart';
 
 import '../providers/image_picker_provider.dart';
+import '../providers/user_provider.dart';
 import '../utils/image_picker_helper.dart';
 import '../utils/loading_manager.dart';
 import '../utils/storage_permission_util.dart';
@@ -88,14 +89,14 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 final name = decrypted["n"];
                 final number = decrypted["s"];
 
-                final provider = context.read<ImagePickerProvider>();
+                final userProvider = context.read<UserProvider>();
 
-                final exists = provider.userList.any(
-                  (item) => item["number"] == number,
+                final exists = userProvider.users.any(
+                  (item) => item.userNumber == number.toString(),
                 );
 
                 if (!exists) {
-                  provider.addUser({"name": name, "number": number});
+                  await userProvider.addUser(name: name, userNumber: number.toString());
                   Fluttertoast.showToast(
                     msg: "已添加新用户 [$name - $number]",
                     backgroundColor: Colors.green,
@@ -335,7 +336,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 suffix: const Icon(FIcons.chevronRight),
                 onPress: () => showUserPickerDialog(
                   context: context,
-                  userList: provider.userList,
+                  userList: context.read<UserProvider>().users,
                   initialName: provider.selectedUserName,
                   onSelected: provider.updateUser,
                 ),
@@ -393,7 +394,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
     final DateTime datetime = provider.combinedDateTime;
     final String userNumber = provider.selectedUserNumber;
-    final String name = (provider.selectedUser!['name'] ?? '').toString();
+    final String name = (provider.selectedUser!.name).toString();
 
     final List<String> watermarkedPaths = [];
 

@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+
+import '../models/user_info_model.dart';
 
 /// @description 用户选择弹窗（单列滚轮，基于 List<Map> 数据源）
 ///
@@ -9,23 +13,23 @@ import 'package:forui/forui.dart';
 /// @param onSelected 回调选中的用户对象
 void showUserPickerDialog({
   required BuildContext context,
-  required List<Map<String, dynamic>> userList,
+  required List<UserInfoModel> userList,
   required String initialName,
-  required void Function(Map<String, dynamic>) onSelected,
+  required void Function(UserInfoModel) onSelected,
 }) {
   if (userList.isEmpty) {
     // 给个 fallback，避免滚轮空数组导致 UI 崩
     userList = [
-      {'name': '无用户', 'number': null},
+      UserInfoModel.fromJson(jsonDecode('{"name": "无用户", "number": null}')),
     ];
   }
 
   // 初始位置
-  int initialIndex = userList.indexWhere((u) => u['name'] == initialName);
+  int initialIndex = userList.indexWhere((u) => u.name == initialName);
   if (initialIndex < 0) initialIndex = 0;
 
   // 当前临时选中值
-  Map<String, dynamic> selectedUser = userList[initialIndex];
+  UserInfoModel selectedUser = userList[initialIndex];
 
   // 两列滚轮控制器
   final FPickerController controller = FPickerController(
@@ -110,7 +114,7 @@ void showUserPickerDialog({
                         .map(
                           (u) => Center(
                             child: Text(
-                              u['name'] ?? '',
+                              u.name ?? '',
                               style: const TextStyle(fontSize: 16),
                             ),
                           ),

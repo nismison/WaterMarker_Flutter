@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../api/http_client.dart';
 import '../providers/app_config_provider.dart';
+import '../providers/image_picker_provider.dart';
 import '../providers/user_provider.dart';
 import '../router.dart';
 import '../services/image_sync_service.dart';
@@ -66,6 +67,7 @@ class _AppRootState extends State<AppRoot> {
     // 0. 获取 Provider
     final appConfigProvider = context.read<AppConfigProvider>();
     final userProvider = context.read<UserProvider>();
+    final imagePickerProvider = context.read<ImagePickerProvider>();
 
     // 1. 初始化路由
     _splashController.updateMessage('正在初始化...');
@@ -83,6 +85,7 @@ class _AppRootState extends State<AppRoot> {
     _splashController.updateMessage('正在加载用户列表...');
     await userProvider.fetchUserList();
     debugPrint('用户列表: ${userProvider.users}');
+    imagePickerProvider.updateUser(userProvider.users.first);
 
     // 5. 初始化完成后，启动图片同步（不阻塞 Splash 动画）
     _startScanImages();
