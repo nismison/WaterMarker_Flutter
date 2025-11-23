@@ -54,30 +54,25 @@ class HttpClient {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           if (kDebugMode) {
-            debugPrint('🔵 ===== HTTP REQUEST =====');
-            debugPrint('🌐 URL: ${options.uri}');
-            debugPrint('📝 METHOD: ${options.method}');
-            debugPrint('📦 HEADERS: ${jsonEncode(options.headers)}');
-            debugPrint('📤 DATA: ${options.data}');
+            debugPrint(
+              '🔵 [REQ] ${options.method} ${options.uri} | headers=${jsonEncode(options.headers)} | data=${options.data}',
+            );
           }
           handler.next(options);
         },
         onResponse: (res, handler) {
           if (kDebugMode) {
-            debugPrint('🟢 ===== HTTP RESPONSE =====');
-            debugPrint('🌐 URL: ${res.requestOptions.uri}');
-            debugPrint('📊 STATUS: ${res.statusCode}');
-            debugPrint('📥 DATA: ${res.data}');
+            debugPrint(
+              '🟢 [RES] ${res.statusCode} ${res.requestOptions.uri} | data=${res.data}',
+            );
           }
           handler.next(res);
         },
         onError: (err, handler) {
           if (kDebugMode) {
-            debugPrint('===== HTTP ERROR =====');
-            debugPrint('URL: ${err.requestOptions.uri}');
-            debugPrint('TYPE: ${err.type}');
-            debugPrint('MESSAGE: ${err.message}');
-            debugPrint('DATA: ${err.response?.data}');
+            debugPrint(
+              '🔴 [ERR] ${err.type} ${err.requestOptions.uri} | message=${err.message} | data=${err.response?.data}',
+            );
           }
           handler.next(err);
         },

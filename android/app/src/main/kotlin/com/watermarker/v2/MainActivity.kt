@@ -1,11 +1,15 @@
 package com.watermarker.v2
 
+import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -25,10 +29,18 @@ class MainActivity : FlutterActivity() {
             CHANNEL_PERMISSION
         ).setMethodCallHandler { call, result ->
             when (call.method) {
+                // 打开“允许访问所有文件”设置页（真正请求权限时用）
                 "openManageAllFilesPage" -> {
                     openManageAllFilesPermissionPage()
                     result.success(null)
                 }
+
+                // 只检查当前是否具备“所有文件访问”能力（静默检查）
+                "hasAllFilesPermission" -> {
+                    val granted = hasAllFilesPermission()
+                    result.success(granted)
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -48,8 +60,30 @@ class MainActivity : FlutterActivity() {
                     val ok = insertImageToMediaStore(path)
                     result.success(ok)
                 }
+
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    /** 只检查是否拥有“所有文件访问”权限，不会触发任何请求或跳转 */
+    private fun hasAllFilesPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ 官方 API：判断 MANAGE_EXTERNAL_STORAGE
+            Environment.isExternalStorageManager()
+        } else {
+            // Android 10 及以下：看传统读写存储权限
+            val readGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val writeGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+
+            readGranted && writeGranted
         }
     }
 
@@ -76,7 +110,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /** 打开管理所有文件权限 */
+    /** 打开管理所有文件权限设置页（真正请求权限时用） */
     private fun openManageAllFilesPermissionPage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             try {
@@ -86,6 +120,17 @@ class MainActivity : FlutterActivity() {
             } catch (e: Exception) {
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
                 startActivity(intent)
+            }
+        } else {
+            // Android 10 及以下，如果你希望也跳设置页，可以打开应用详情页：
+            try {
+                val intent = Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            } catch (_: Exception) {
+                // 忽略
             }
         }
     }
