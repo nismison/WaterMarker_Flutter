@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../api/check_update_api.dart';
 import '../api/http_client.dart';
 import '../providers/app_config_provider.dart';
 import '../providers/image_picker_provider.dart';
@@ -81,6 +82,14 @@ class _AppRootState extends State<AppRoot> {
 
     _splashController.updateMessage('正在初始化数据库...');
     // await DatabaseUtil.deleteDb();
+
+    final api = CheckUpdateApi();
+
+    final latest = await api.fetchLatest();
+
+    debugPrint("最新版本: ${latest.version}");
+    debugPrint("下载地址: ${latest.nowUrl}");
+    debugPrint("额外配置: ${latest.extraConfig}");
 
     // 5. 异步启动图片同步
     _startScanImages();

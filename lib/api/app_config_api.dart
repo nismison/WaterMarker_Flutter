@@ -24,10 +24,6 @@ class AppConfigApi extends ApiClient {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, jsonEncode(model.toJson()));
 
-    if (kDebugMode) {
-      debugPrint('AppConfig saved: ${jsonEncode(model.toJson())}');
-    }
-
     return model;
   }
 
