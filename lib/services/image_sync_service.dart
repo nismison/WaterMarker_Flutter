@@ -89,17 +89,13 @@ class ImageSyncService {
     final album = albums.first;
     final total = await album.assetCountAsync;
 
-    const pageSize = 200;
-    final pages = (total / pageSize).ceil();
-
     debugPrint('[ImageSync] 主相册: ${album.name}, 总数: $total');
 
-    for (int page = 0; page < pages; page++) {
-      final assets = await album.getAssetListPaged(page: page, size: pageSize);
+    // 一次性获取全部 assets（photo_manager 内部已经分批处理，不会卡顿）
+    final assets = await album.getAssetListRange(start: 0, end: total);
 
-      for (final asset in assets) {
-        result.add(_FileMeta(assetId: asset.id));
-      }
+    for (final asset in assets) {
+      result.add(_FileMeta(assetId: asset.id));
     }
 
     return result;
