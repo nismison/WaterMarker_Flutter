@@ -123,7 +123,7 @@ class _AppRootState extends State<AppRoot> {
 
     final hasAll = await StorageUtil.hasAllFilesAccess();
     if (!hasAll) {
-      _splashController.updateMessage('未授予文件访问权限，跳过自动同步');
+      debugPrint("[ImageSync] 未授予文件访问权限，跳过自动同步");
       return;
     }
 

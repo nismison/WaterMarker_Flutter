@@ -89,7 +89,6 @@ class _AdvancedImagePreviewPageState extends State<AdvancedImagePreviewPage>
   @override
   void initState() {
     super.initState();
-    _enterFullScreen();
 
     final List<String> images = widget.imageList ?? <String>[widget.imagePath!];
     final int safeIndex = (widget.initialIndex >= 0 &&
@@ -108,19 +107,10 @@ class _AdvancedImagePreviewPageState extends State<AdvancedImagePreviewPage>
 
   @override
   void dispose() {
-    _exitFullScreen();
     _pageController.dispose();
     _doubleTapAnimation?.removeListener(_doubleTapAnimationListener ?? () {});
     _doubleTapAnimationController.dispose();
     super.dispose();
-  }
-
-  void _enterFullScreen() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  }
-
-  void _exitFullScreen() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override

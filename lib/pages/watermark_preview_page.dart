@@ -26,9 +26,7 @@ class WatermarkPreviewPage extends StatelessWidget {
       header: FHeader.nested(
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text('水印预览'),
-          ],
+          children: [Text('水印预览')],
         ),
         prefixes: [
           FHeaderAction.back(
@@ -42,12 +40,10 @@ class WatermarkPreviewPage extends StatelessWidget {
             icon: const Icon(FIcons.saveAll),
             onPress: () async {
               final loading = GlobalLoading();
+              loading.show(context, text: "正在保存图片...");
 
               try {
-                loading.show(context, text: "正在保存图片...");
-
                 final paths = await StorageUtil.saveImages(imagePaths);
-
                 debugPrint("成功保存到：$paths");
                 Fluttertoast.showToast(
                   msg: "保存成功",
