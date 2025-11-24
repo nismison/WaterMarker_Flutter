@@ -1,10 +1,8 @@
-// lib/pages/app_root.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-import '../api/check_update_api.dart';
 import '../api/http_client.dart';
 import '../providers/app_config_provider.dart';
 import '../providers/image_picker_provider.dart';
@@ -13,6 +11,7 @@ import '../router.dart';
 import '../services/image_sync_service.dart';
 import '../utils/database_util.dart';
 import '../utils/storage_util.dart';
+import '../utils/update_util.dart';
 import 'splash_page.dart';
 import 'watermark_app.dart';
 
@@ -81,15 +80,28 @@ class _AppRootState extends State<AppRoot> {
     imagePickerProvider.updateUser(userProvider.users.first);
 
     _splashController.updateMessage('正在初始化数据库...');
+    // TODO: 删除数据库
     // await DatabaseUtil.deleteDb();
 
-    final api = CheckUpdateApi();
+    _splashController.updateMessage('正在检查更新...');
+    final info = await PackageInfo.fromPlatform();
+    final currentVersion = info.version;
 
-    final latest = await api.fetchLatest();
+    final result = await UpdateUtil.checkUpdate(currentVersion);
 
-    debugPrint("最新版本: ${latest.version}");
-    debugPrint("下载地址: ${latest.nowUrl}");
-    debugPrint("额外配置: ${latest.extraConfig}");
+    if (result["needUpdate"]) {
+      _splashController.updateMessage('正在下载更新...');
+      debugPrint("[Update] 发现新版本：${result['latestVersion']}");
+      debugPrint("[Update] 下载地址：${result['downloadUrl']}");
+      await UpdateUtil.downloadAndInstallApk(
+        result["downloadUrl"],
+        onProgress: (v) {
+          _splashController.updateMessage("下载进度：${(v * 100).toStringAsFixed(1)}%");
+        },
+      );
+    } else {
+      debugPrint("[Update] 当前已是最新版本: $currentVersion");
+    }
 
     // 5. 异步启动图片同步
     _startScanImages();

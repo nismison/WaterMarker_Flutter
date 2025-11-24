@@ -14,11 +14,13 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import androidx.core.content.FileProvider
 
 class MainActivity : FlutterActivity() {
 
-    private val CHANNEL_PERMISSION = "external_storage_permission"
-    private val CHANNEL_MEDIA_STORE = "media_store"
+    private val CHANNEL_PERMISSION = "external_storage_permission"  //  扩展存储权限
+    private val CHANNEL_MEDIA_STORE = "media_store"  //  插入图片到 MediaStore
+    private val CHANNEL_INSTALL = "apk_installer"  //  安装apk
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -64,7 +66,41 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        // ====== MediaStore Channel ======
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL_INSTALL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "installApk" -> {
+                    val path = call.argument<String>("filePath")!!
+                    installApk(path)
+                    result.success(null)
+                }
+
+                else -> result.notImplemented()
+            }
+        }
     }
+
+    /** 安装 APK */
+    private fun installApk(path: String) {
+        val file = File(path)
+        val uri = FileProvider.getUriForFile(
+            this,
+            "$packageName.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        startActivity(intent)
+    }
+
 
     /** 只检查是否拥有“所有文件访问”权限，不会触发任何请求或跳转 */
     private fun hasAllFilesPermission(): Boolean {
