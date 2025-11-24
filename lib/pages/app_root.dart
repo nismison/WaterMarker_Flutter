@@ -78,6 +78,9 @@ class _AppRootState extends State<AppRoot> {
     await userProvider.fetchUserList();
     imagePickerProvider.updateUser(userProvider.users.first);
 
+    // _splashController.updateMessage('正在初始化数据库...');
+    // await DatabaseUtil.deleteDb();
+
     // 5. 异步启动图片同步
     _startScanImages();
   }
