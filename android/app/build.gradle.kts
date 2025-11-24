@@ -42,3 +42,11 @@ android {
 flutter {
     source = "../.."
 }
+
+// ==== 修复 R8 Release 构建失败问题 ====
+// 排除 desktop-only 的 zxing / jai-imageio / javax.imageio 依赖
+configurations.all {
+    exclude(group = "com.google.zxing", module = "javase")
+    exclude(group = "com.github.jai-imageio")
+    exclude(group = "javax.imageio")
+}
