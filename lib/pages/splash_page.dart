@@ -31,28 +31,39 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       // 可以根据你的 App 风格调整颜色
-      backgroundColor: Colors.black,
-      body: Center(
+      backgroundColor: Colors.white,
+      body: Align(
+        alignment: const Alignment(0, -0.2), // y 轴向上偏移 20%
         child: AnimatedBuilder(
           animation: controller,
           builder: (context, _) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  width: 180,
-                  height: 180,
-                  child: Lottie.asset(
-                    'assets/animations/splash_loading.json',
-                    repeat: true,
-                    animate: true,
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxWidth = constraints.maxWidth;
+
+                    return SizedBox(
+                      width: maxWidth, // 与屏幕等宽
+                      child: FittedBox(
+                        fit: BoxFit.contain, // 保持原始比例
+                        child: SizedBox(
+                          width: maxWidth,
+                          child: Lottie.asset(
+                            'assets/animations/splash_loading.json',
+                            repeat: true,
+                            animate: true,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
                 Text(
                   controller.message,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 16,
                   ),
                 ),

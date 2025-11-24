@@ -93,12 +93,13 @@ class _AppRootState extends State<AppRoot> {
       _splashController.updateMessage('正在下载更新...');
       debugPrint("[Update] 发现新版本：${result['latestVersion']}");
       debugPrint("[Update] 下载地址：${result['downloadUrl']}");
-      await UpdateUtil.downloadAndInstallApk(
-        result["downloadUrl"],
-        onProgress: (v) {
-          _splashController.updateMessage("下载进度：${(v * 100).toStringAsFixed(1)}%");
-        },
-      );
+      // TODO: 下载安装包
+      // await UpdateUtil.downloadAndInstallApk(
+      //   result["downloadUrl"],
+      //   onProgress: (v) {
+      //     _splashController.updateMessage("下载进度：${(v * 100).toStringAsFixed(1)}%");
+      //   },
+      // );
     } else {
       debugPrint("[Update] 当前已是最新版本: $currentVersion");
     }
