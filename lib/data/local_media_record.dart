@@ -1,9 +1,9 @@
 class LocalMediaRecord {
-  final String path;
+  final String assetId;
   final bool uploaded;
 
   const LocalMediaRecord({
-    required this.path,
+    required this.assetId,
     required this.uploaded,
   });
 
@@ -11,21 +11,21 @@ class LocalMediaRecord {
     bool? uploaded,
   }) {
     return LocalMediaRecord(
-      path: path,
+      assetId: assetId,
       uploaded: uploaded ?? this.uploaded,
     );
   }
 
   factory LocalMediaRecord.fromMap(Map<String, Object?> map) {
     return LocalMediaRecord(
-      path: map['path'] as String,
+      assetId: map['asset_id'] as String,
       uploaded: (map['uploaded'] as int) == 1,
     );
   }
 
   Map<String, Object?> toMap() {
     return {
-      'path': path,
+      'asset_id': assetId,
       'uploaded': uploaded ? 1 : 0,
     };
   }

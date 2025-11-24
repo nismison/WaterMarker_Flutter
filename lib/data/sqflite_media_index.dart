@@ -8,18 +8,19 @@ class SqfliteMediaIndex implements LocalMediaIndex {
 
   Future<void> _ensureDb() async {
     if (_db != null) return;
+
     final path = await DatabaseUtil.getDbPath();
     _db = await openDatabase(path, version: 1);
-    await DatabaseUtil.initMediaIndexTable();
+    await DatabaseUtil.initTable();
   }
 
   @override
-  Future<LocalMediaRecord?> get(String path) async {
+  Future<LocalMediaRecord?> get(String assetId) async {
     await _ensureDb();
     final rows = await _db!.query(
-      DatabaseUtil.tableMediaIndex,
-      where: 'path = ?',
-      whereArgs: [path],
+      DatabaseUtil.table,
+      where: 'asset_id = ?',
+      whereArgs: [assetId],
     );
     if (rows.isEmpty) return null;
     return LocalMediaRecord.fromMap(rows.first);
@@ -29,17 +30,17 @@ class SqfliteMediaIndex implements LocalMediaIndex {
   Future<void> upsert(LocalMediaRecord record) async {
     await _ensureDb();
     await _db!.insert(
-      DatabaseUtil.tableMediaIndex,
+      DatabaseUtil.table,
       record.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
-  Future<void> markUploaded(String path) async {
+  Future<void> markUploaded(String assetId) async {
     await _ensureDb();
-    await _db!.insert(DatabaseUtil.tableMediaIndex, {
-      'path': path,
+    await _db!.insert(DatabaseUtil.table, {
+      'asset_id': assetId,
       'uploaded': 1,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
@@ -48,7 +49,7 @@ class SqfliteMediaIndex implements LocalMediaIndex {
   Future<List<LocalMediaRecord>> getUnuploaded({int limit = 100}) async {
     await _ensureDb();
     final rows = await _db!.query(
-      DatabaseUtil.tableMediaIndex,
+      DatabaseUtil.table,
       where: 'uploaded = 0',
       limit: limit,
     );
@@ -61,7 +62,7 @@ class SqfliteMediaIndex implements LocalMediaIndex {
     final batch = _db!.batch();
     for (final r in records) {
       batch.insert(
-        DatabaseUtil.tableMediaIndex,
+        DatabaseUtil.table,
         r.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );

@@ -36,7 +36,7 @@ class ImageSyncService {
     final deviceModel = await _ensureDeviceModel();
 
     final excludeList =
-        (appConfig.config?.autoUpload.excludeDeviceModels ?? const <String>[])
+        (appConfig.config?.autoUpload.excludeDeviceModels ?? const [])
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
             .toSet();
@@ -48,69 +48,57 @@ class ImageSyncService {
 
     debugPrint('[ImageSync] 当前设备型号: $deviceModel，开始扫描');
 
-    // ★ 1. 全量扫描（轻量）
-    final files = await _scanAllImages();
-    if (files.isEmpty) {
-      debugPrint('[ImageSync] 无图片');
-      return;
-    }
+    // 1. 扫描所有 assetId（极快）
+    final files = await _scanAllAssets();
+    debugPrint('[ImageSync] 扫描完成，共 ${files.length} 个 asset');
 
-    debugPrint('[ImageSync] 扫描完成，共 ${files.length} 张图片');
-
-    // ★ 2. 找出未上传的文件（不再比较 size/mtime）
+    // 2. 找出未上传的
     final candidates = <_FileMeta>[];
     for (final f in files) {
-      final record = await localIndex.get(f.path);
-      if (record == null || !record.uploaded) {
+      final rec = await localIndex.get(f.assetId);
+      if (rec == null || !rec.uploaded) {
         candidates.add(f);
       }
     }
 
     if (candidates.isEmpty) {
-      debugPrint('[ImageSync] 没有需要上传的文件');
+      debugPrint('[ImageSync] 全部已上传，无需同步');
       return;
     }
 
-    debugPrint('[ImageSync] 需要上传的文件数: ${candidates.length}');
+    debugPrint('[ImageSync] 本轮需上传 ${candidates.length} 个文件');
 
-    // ★ 3. 串行上传（防卡顿、无并发）
+    // 3. 串行上传
     for (final meta in candidates) {
-      await _handleOneFile(meta); // 串行执行
+      await _handleOneFile(meta);
     }
 
-    debugPrint('[ImageSync] 完成全部上传任务');
+    debugPrint('[ImageSync] 本轮同步完成');
   }
 
-  /// 扫描系统媒体库中的所有图片，抽象成文件元数据列表
-  /// 分页扫描相册，但每页只读取 path + mtime，不读取文件内容，不算 md5。
-  Future<List<_FileMeta>> _scanAllImages() async {
-    final result = <_FileMeta>[];
+  /// 只扫描 asset.id，不访问文件
+  Future<List<_FileMeta>> _scanAllAssets() async {
+    final List<_FileMeta> result = [];
 
-    final paths = await PhotoManager.getAssetPathList(
+    final albums = await PhotoManager.getAssetPathList(
       type: RequestType.image,
       onlyAll: true,
     );
-    if (paths.isEmpty) return result;
+    if (albums.isEmpty) return result;
 
-    final mainAlbum = paths.first;
-    final total = await mainAlbum.assetCountAsync;
+    final album = albums.first;
+    final total = await album.assetCountAsync;
 
-    debugPrint('[ImageSync] 主相册: ${mainAlbum.name}, 总数: $total');
+    const pageSize = 200;
+    final pages = (total / pageSize).ceil();
 
-    const pageSize = 100;
-    final totalPages = (total / pageSize).ceil();
+    debugPrint('[ImageSync] 主相册: ${album.name}, 总数: $total');
 
-    for (int page = 0; page < totalPages; page++) {
-      final assets = await mainAlbum.getAssetListPaged(
-        page: page,
-        size: pageSize,
-      );
+    for (int page = 0; page < pages; page++) {
+      final assets = await album.getAssetListPaged(page: page, size: pageSize);
 
       for (final asset in assets) {
-        final file = await asset.file;
-        if (file == null) continue;
-
-        result.add(_FileMeta(path: file.path));
+        result.add(_FileMeta(assetId: asset.id));
       }
     }
 
@@ -121,34 +109,46 @@ class ImageSyncService {
   /// - 只计算 md5（用于秒传）
   /// - 秒传命中 → markUploaded(path)
   /// - 上传成功 → markUploaded(path)
+  /// 串行处理单个文件
   Future<void> _handleOneFile(_FileMeta meta) async {
-    final path = meta.path;
-
     try {
-      final md5 = await Md5Util.fileMd5(path);
-
-      // 秒传
-      final status = await uploadApi.checkUploaded(etag: md5);
-      if (status.uploaded == true) {
-        await localIndex.markUploaded(path);
-        debugPrint('[ImageSync] 秒传命中: $path');
+      final asset = await AssetEntity.fromId(meta.assetId);
+      if (asset == null) {
+        debugPrint('[ImageSync] 找不到文件 assetId=${meta.assetId}');
         return;
       }
 
-      // 真正上传
-      await uploadApi.uploadToGallery(filePath: path, etag: md5);
-      await localIndex.markUploaded(path);
+      final file = await asset.file;
+      if (file == null) {
+        debugPrint('[ImageSync] 无法获取文件: ${meta.assetId}');
+        return;
+      }
 
-      debugPrint('[ImageSync] 上传成功: $path');
+      final md5 = await Md5Util.fileMd5(file.path);
+
+      final status = await uploadApi.checkUploaded(etag: md5);
+      if (status.uploaded == true) {
+        await localIndex.markUploaded(meta.assetId);
+        debugPrint('[ImageSync] 秒传命中: ${meta.assetId}');
+        return;
+      }
+
+      if (isUpload) {
+        await uploadApi.uploadToGallery(filePath: file.path, etag: md5);
+        await localIndex.markUploaded(meta.assetId);
+        debugPrint('[ImageSync] 上传成功: ${meta.assetId}');
+      } else {
+        debugPrint('[ImageSync] 跳过上传: ${meta.assetId}');
+      }
     } catch (e, s) {
-      debugPrint('[ImageSync] 上传失败: $path, error: $e');
+      debugPrint('[ImageSync] 上传失败: ${meta.assetId}, error=$e');
       debugPrint('$s');
     }
   }
 }
 
 class _FileMeta {
-  final String path;
+  final String assetId;
 
-  _FileMeta({required this.path});
+  _FileMeta({required this.assetId});
 }

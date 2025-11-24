@@ -10,6 +10,7 @@ import '../providers/image_picker_provider.dart';
 import '../providers/user_provider.dart';
 import '../router.dart';
 import '../services/image_sync_service.dart';
+import '../utils/database_util.dart';
 import '../utils/storage_util.dart';
 import 'splash_page.dart';
 import 'watermark_app.dart';
@@ -78,7 +79,7 @@ class _AppRootState extends State<AppRoot> {
     await userProvider.fetchUserList();
     imagePickerProvider.updateUser(userProvider.users.first);
 
-    // _splashController.updateMessage('正在初始化数据库...');
+    _splashController.updateMessage('正在初始化数据库...');
     // await DatabaseUtil.deleteDb();
 
     // 5. 异步启动图片同步
