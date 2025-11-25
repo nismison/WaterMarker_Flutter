@@ -67,7 +67,8 @@ Future<ui.Image> renderWatermarkedImage({
     canvasWidth.toDouble(),
     canvasHeight.toDouble(),
   );
-  canvas.drawImageRect(srcImage, srcRect, dstRect, ui.Paint());
+  final paint = ui.Paint()..filterQuality = ui.FilterQuality.high;
+  canvas.drawImageRect(srcImage, srcRect, dstRect, paint);
 
   // 绘制左下文字区域（包含位置图标）
   await _drawTextOverlay(
@@ -132,7 +133,8 @@ Future<void> _drawTextOverlay({
 
   // 颜色
   final ui.Color textColor = Colors.white;
-  final ui.Paint panelPaint = ui.Paint()..color = ui.Color.fromRGBO(0, 0, 0, 0.3);
+  final ui.Paint panelPaint = ui.Paint()
+    ..color = ui.Color.fromRGBO(0, 0, 0, 0.3);
 
   // ------------- 第一行背景（时间 + 姓名 + 日期）-------------
   const double firstX = 27;
@@ -187,7 +189,7 @@ Future<void> _drawTextOverlay({
   canvas.drawRRect(secondPanel, panelPaint);
 
   // 加载位置图标
-  final ui.Image locationIcon = await _loadAssetImage(
+  final ui.Image locationIcon = await _loadAssetImageOnce(
     'assets/icons/location_icon.png',
   );
 
@@ -214,6 +216,17 @@ Future<void> _drawTextOverlay({
   );
 }
 
+ui.Image? _cachedLocationIcon;
+
+Future<ui.Image> _loadAssetImageOnce(String assetPath) async {
+  if (_cachedLocationIcon != null) return _cachedLocationIcon!;
+  final data = await rootBundle.load(assetPath);
+  final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+  final frame = await codec.getNextFrame();
+  _cachedLocationIcon = frame.image;
+  return _cachedLocationIcon!;
+}
+
 /// 低层级文字绘制封装：使用 Paragraph + fontFamily
 ///
 /// 注意：fontFamily 必须在 pubspec.yaml 里声明：
@@ -234,19 +247,9 @@ void _drawText(
 
   final ui.ParagraphBuilder builder =
       ui.ParagraphBuilder(
-          ui.ParagraphStyle(
-            fontFamily: fontFamily,
-            fontSize: fontSize,
-            fontWeight: FontWeight.normal,
-          ),
+          ui.ParagraphStyle(fontFamily: fontFamily, fontSize: fontSize),
         )
-        ..pushStyle(
-          ui.TextStyle(
-            color: color,
-            fontSize: fontSize,
-            fontFamily: fontFamily,
-          ),
-        )
+        ..pushStyle(ui.TextStyle(color: color))
         ..addText(text);
 
   final ui.Paragraph paragraph = builder.build()
