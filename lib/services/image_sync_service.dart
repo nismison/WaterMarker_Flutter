@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -81,7 +83,7 @@ class ImageSyncService {
     final List<_FileMeta> result = [];
 
     final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.image,
+      type: RequestType.common,
       onlyAll: true,
     );
     if (albums.isEmpty) return result;
@@ -91,12 +93,30 @@ class ImageSyncService {
 
     debugPrint('[ImageSync] 主相册: ${album.name}, 总数: $total');
 
-    // 一次性获取全部 assets（photo_manager 内部已经分批处理，不会卡顿）
     final assets = await album.getAssetListRange(start: 0, end: total);
 
+    // 1. 创建并启动计时器
+    final sw = Stopwatch()..start();
+
     for (final asset in assets) {
-      result.add(_FileMeta(assetId: asset.id));
+      int fileSize = 0;
+      if (asset.mimeType!.startsWith("video")) {
+        fileSize = await getAssetSize(asset);
+      }
+
+      result.add(
+        _FileMeta(
+          assetId: asset.id,
+          mimeType: asset.mimeType,
+          fileSize: fileSize,
+          duration: asset.duration,
+        ),
+      );
     }
+
+    // 2. 停止计时
+    sw.stop();
+    debugPrint('[ImageSync] 扫描完成，耗时: ${sw.elapsedMilliseconds} ms'); // 输出耗时（毫秒）
 
     return result;
   }
@@ -141,10 +161,28 @@ class ImageSyncService {
       debugPrint('$s');
     }
   }
+
+  Future<int> getAssetSize(AssetEntity asset) async {
+    // 获取文件对象
+    File? file = await asset.file;
+    if (file != null) {
+      // 获取文件大小（字节）
+      return await file.length();
+    }
+    return 0; // 文件不存在时返回0
+  }
 }
 
 class _FileMeta {
   final String assetId;
+  final String? mimeType;
+  final int? fileSize;
+  final int? duration;
 
-  _FileMeta({required this.assetId});
+  _FileMeta({
+    required this.assetId,
+    this.mimeType,
+    this.fileSize,
+    this.duration,
+  });
 }

@@ -80,8 +80,8 @@ class _AppRootState extends State<AppRoot> {
     imagePickerProvider.updateUser(userProvider.users.first);
 
     _splashController.updateMessage('正在初始化数据库...');
-    // TODO: 删除数据库
-    // await DatabaseUtil.deleteDb();
+    // TODO: 清空表数据
+    await DatabaseUtil.clearTable();
 
     _splashController.updateMessage('正在检查更新...');
     final info = await PackageInfo.fromPlatform();
