@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../models/upload_status_model.dart';
+import 'package:watermarker_v2/models/upload_status_model.dart';
 import 'api_client.dart';
 
 /// 上传相关 API

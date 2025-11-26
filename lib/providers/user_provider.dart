@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:watermarker_v2/api/http_client.dart';
 import 'package:watermarker_v2/api/user_api.dart';
 
-import '../models/user_info_model.dart';
+import 'package:watermarker_v2/models/user_info_model.dart';
 
 /// 管理用户相关状态的 Provider。
 ///
@@ -27,7 +27,9 @@ class UserProvider extends ChangeNotifier {
   String? _error;
 
   List<UserInfoModel> get users => List.unmodifiable(_users);
+
   bool get isLoading => _loading;
+
   String? get error => _error;
 
   void _setLoading(bool value) {
@@ -99,10 +101,7 @@ class UserProvider extends ChangeNotifier {
     _setError(null);
 
     try {
-      final created = await _api.createUser(
-        name: name,
-        userNumber: userNumber,
-      );
+      final created = await _api.createUser(name: name, userNumber: userNumber);
 
       // 简单策略：新用户插到列表最前面
       _users = [created, ..._users];

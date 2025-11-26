@@ -10,16 +10,16 @@ import 'package:qr_code_tools/qr_code_tools.dart';
 import 'package:watermarker_v2/pages/qr_scan_page.dart';
 import 'package:watermarker_v2/pages/watermark_preview_page.dart';
 
-import '../providers/image_picker_provider.dart';
-import '../providers/user_provider.dart';
-import '../utils/image_picker_helper.dart';
-import '../utils/loading_manager.dart';
-import '../utils/storage_permission_util.dart';
-import '../utils/watermark/encryption.dart';
-import '../utils/watermark/watermark_generator.dart';
-import '../widgets/date_picker_dialog.dart';
-import '../widgets/time_picker_dialog.dart';
-import '../widgets/user_picker_dialog.dart';
+import 'package:watermarker_v2/providers/image_picker_provider.dart';
+import 'package:watermarker_v2/providers/user_provider.dart';
+import 'package:watermarker_v2/utils/image_picker_helper.dart';
+import 'package:watermarker_v2/utils/loading_manager.dart';
+import 'package:watermarker_v2/utils/storage_permission_util.dart';
+import 'package:watermarker_v2/utils/watermark/encryption.dart';
+import 'package:watermarker_v2/utils/watermark/watermark_generator.dart';
+import 'package:watermarker_v2/widgets/date_picker_dialog.dart';
+import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
+import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
 import 'advanced_image_preview_page.dart';
 
 class ImagePickerPage extends StatefulWidget {
@@ -96,7 +96,10 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 );
 
                 if (!exists) {
-                  await userProvider.addUser(name: name, userNumber: number.toString());
+                  await userProvider.addUser(
+                    name: name,
+                    userNumber: number.toString(),
+                  );
                   Fluttertoast.showToast(
                     msg: "已添加新用户 [$name - $number]",
                     backgroundColor: Colors.green,

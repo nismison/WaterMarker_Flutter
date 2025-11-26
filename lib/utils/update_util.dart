@@ -3,12 +3,11 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../api/check_update_api.dart';
-import '../api/download_api.dart';
+import 'package:watermarker_v2/api/check_update_api.dart';
+import 'package:watermarker_v2/api/download_api.dart';
 
 class UpdateUtil {
-  static const MethodChannel _installChannel =
-  MethodChannel("apk_installer");
+  static const MethodChannel _installChannel = MethodChannel("apk_installer");
 
   // ============================================================
   // 1. 检查服务器版本，判断是否需要更新
@@ -20,8 +19,7 @@ class UpdateUtil {
   ///   "latestVersion": "1.3.6",
   ///   "downloadUrl": "/api/download/app-release.apk"
   /// }
-  static Future<Map<String, dynamic>> checkUpdate(
-      String currentVersion) async {
+  static Future<Map<String, dynamic>> checkUpdate(String currentVersion) async {
     final check = await CheckUpdateApi().fetchLatest();
 
     final latestVersion = check.version;
@@ -67,9 +65,9 @@ class UpdateUtil {
 
   /// 下载 APK 到临时目录，然后安装
   static Future<void> downloadAndInstallApk(
-      String downloadUrl, {
-        void Function(double progress)? onProgress,
-      }) async {
+    String downloadUrl, {
+    void Function(double progress)? onProgress,
+  }) async {
     final bytes = await DownloadApi().downloadFile(
       downloadUrl,
       onProgress: onProgress,

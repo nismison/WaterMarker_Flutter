@@ -5,7 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:watermarker_v2/utils/loading_manager.dart';
 
-import '../utils/storage_util.dart';
+import 'package:watermarker_v2/utils/storage_util.dart';
 import 'advanced_image_preview_page.dart';
 
 class WatermarkPreviewPage extends StatelessWidget {

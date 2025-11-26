@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
 
-import '../providers/app_config_provider.dart';
-import '../utils/md5_util.dart';
-import '../data/local_media_index.dart';
-import '../data/sqflite_media_index.dart';
-import '../api/upload_api.dart';
-import '../utils/device_util.dart';
+import 'package:watermarker_v2/providers/app_config_provider.dart';
+import 'package:watermarker_v2/utils/md5_util.dart';
+import 'package:watermarker_v2/data/local_media_index.dart';
+import 'package:watermarker_v2/data/sqflite_media_index.dart';
+import 'package:watermarker_v2/api/upload_api.dart';
+import 'package:watermarker_v2/utils/device_util.dart';
 
 class ImageSyncService {
   final LocalMediaIndex localIndex;
