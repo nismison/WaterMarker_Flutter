@@ -139,7 +139,10 @@ class ImageSyncService {
 
       // fingerprint 秒传未命中，尝试 md5 秒传
       final md5 = await file.md5();
-      final md5UploadedStatus = await uploadApi.checkUploaded(etag: md5);
+      final md5UploadedStatus = await uploadApi.checkUploaded(
+        etag: md5,
+        fingerprint: fp,
+      );
       if (md5UploadedStatus.uploaded == true) {
         await localIndex.markUploaded(asset.id);
         debugPrint('[ImageSync] md5 秒传命中: ${asset.id}');
