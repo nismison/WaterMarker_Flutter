@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:water_marker_test2/api/api_client.dart';
-import 'package:water_marker_test2/models/app_config_model.dart';
+import 'package:watermarker_v2/api/api_client.dart';
+import 'package:watermarker_v2/models/app_config_model.dart';
 
 class AppConfigApi extends ApiClient {
   static const String _prefsKey = 'app_config';

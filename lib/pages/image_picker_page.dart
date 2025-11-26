@@ -7,8 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 
-import 'package:water_marker_test2/pages/qr_scan_page.dart';
-import 'package:water_marker_test2/pages/watermark_preview_page.dart';
+import 'package:watermarker_v2/pages/qr_scan_page.dart';
+import 'package:watermarker_v2/pages/watermark_preview_page.dart';
 
 import '../providers/image_picker_provider.dart';
 import '../providers/user_provider.dart';

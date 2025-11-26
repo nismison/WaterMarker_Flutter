@@ -2,8 +2,8 @@
 
 import 'package:flutter/foundation.dart';
 
-import 'package:water_marker_test2/api/http_client.dart';
-import 'package:water_marker_test2/api/user_api.dart';
+import 'package:watermarker_v2/api/http_client.dart';
+import 'package:watermarker_v2/api/user_api.dart';
 
 import '../models/user_info_model.dart';
 

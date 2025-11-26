@@ -1,4 +1,4 @@
-import 'package:water_marker_test2/api/api_client.dart';
+import 'package:watermarker_v2/api/api_client.dart';
 
 /// 通知相关 API
 class NotifyApi extends ApiClient {
