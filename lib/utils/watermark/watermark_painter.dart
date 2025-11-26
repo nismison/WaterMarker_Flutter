@@ -258,15 +258,6 @@ void _drawText(
   canvas.drawParagraph(paragraph, offset);
 }
 
-/// 从 assets 加载 PNG 图片为 ui.Image
-Future<ui.Image> _loadAssetImage(String assetPath) async {
-  final ByteData data = await rootBundle.load(assetPath);
-  final Uint8List bytes = data.buffer.asUint8List();
-  final ui.Codec codec = await ui.instantiateImageCodec(bytes);
-  final ui.FrameInfo frameInfo = await codec.getNextFrame();
-  return frameInfo.image;
-}
-
 /// 星期数字转中文
 String _weekdayCn(int weekday) {
   const List<String> weeks = <String>['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
