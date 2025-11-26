@@ -151,7 +151,7 @@ class ImageSyncService {
 
       // 秒传未命中，开始上传
       if (isUpload) {
-        await uploadApi.uploadToGallery(filePath: file.path, etag: md5);
+        await uploadApi.uploadToGallery(filePath: file.path, etag: md5, fingerprint: fp);
         await localIndex.markUploaded(asset.id);
         debugPrint('[ImageSync] 上传成功: ${asset.id}');
       } else {

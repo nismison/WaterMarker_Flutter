@@ -37,11 +37,13 @@ class UploadApi extends ApiClient {
   Future<void> uploadToGallery({
     required String filePath,
     required String etag,
+    required String fingerprint,
   }) async {
     // 先构造表单
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       'etag': etag,
+      'fingerprint': fingerprint,
     });
 
     // 这里我们只关心成功/失败，不关心返回的 data
