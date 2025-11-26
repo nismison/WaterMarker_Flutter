@@ -50,20 +50,31 @@ class UploadApi extends ApiClient {
     });
   }
 
-  /// 检查 etag 是否已经上传过
+  /// 检查文件是否已上传
   ///
-  /// 对应后端：
-  ///   GET /api/check_uploaded?etag=xxx
-  ///
-  /// 返回格式：
-  ///   {
-  ///     "success": true,
-  ///     "error": "",
-  ///     "data": { "uploaded": true/false }
-  ///   }
-  Future<UploadStatus> checkUploaded({required String etag}) async {
+  /// - `etag` 和 `fingerprint` 至少需要一个不能同时为空
+  /// - 只有一个参数时就只按那一个查询
+  /// - 两个都有时，后端会优先用 fingerprint，再按你定义的规则回填 fingerprint
+  Future<UploadStatus> checkUploaded({
+    String? etag,
+    String? fingerprint,
+  }) async {
+    // 本地兜底校验，避免发无效请求
+    if ((etag == null || etag.isEmpty) &&
+        (fingerprint == null || fingerprint.isEmpty)) {
+      throw ArgumentError('etag 和 fingerprint 不能同时为空');
+    }
+
+    final queryParams = <String, dynamic>{};
+    if (etag != null && etag.isNotEmpty) {
+      queryParams['etag'] = etag;
+    }
+    if (fingerprint != null && fingerprint.isNotEmpty) {
+      queryParams['fingerprint'] = fingerprint;
+    }
+
     final Map<String, dynamic> data = await safeCall(() {
-      return dio.get('/api/check_uploaded', queryParameters: {'etag': etag});
+      return dio.get('/api/check_uploaded', queryParameters: queryParams);
     });
 
     return UploadStatus.fromJson(data);

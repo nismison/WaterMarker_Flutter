@@ -126,15 +126,27 @@ class ImageSyncService {
         return;
       }
 
-      final md5 = await FileUtil.fileMd5(file.path);
-
-      final status = await uploadApi.checkUploaded(etag: md5);
-      if (status.uploaded == true) {
+      // 优先检测 fingerprint
+      final fp = await file.fingerprint();
+      final fingerUploadedStatus = await uploadApi.checkUploaded(
+        fingerprint: fp,
+      );
+      if (fingerUploadedStatus.uploaded == true) {
         await localIndex.markUploaded(asset.id);
-        debugPrint('[ImageSync] 秒传命中: ${asset.id}');
+        debugPrint('[ImageSync] fingerprint 秒传命中: ${asset.id}');
         return;
       }
 
+      // fingerprint 秒传未命中，尝试 md5 秒传
+      final md5 = await file.md5();
+      final md5UploadedStatus = await uploadApi.checkUploaded(etag: md5);
+      if (md5UploadedStatus.uploaded == true) {
+        await localIndex.markUploaded(asset.id);
+        debugPrint('[ImageSync] md5 秒传命中: ${asset.id}');
+        return;
+      }
+
+      // 秒传未命中，开始上传
       if (isUpload) {
         await uploadApi.uploadToGallery(filePath: file.path, etag: md5);
         await localIndex.markUploaded(asset.id);
