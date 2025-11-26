@@ -1,13 +1,12 @@
-// lib/utils/md5_util.dart
 import 'dart:io';
 import 'dart:isolate';
 import 'package:crypto/crypto.dart';
 
-/// MD5 工具：
-/// - fileMd5: 流式读取文件，计算 32 位小写 hex MD5
+/// 文件工具：
+/// - fileMd5: 流式读取文件，计算 32 位大写 hex MD5
 /// - bytesMd5: 已有内存数据时计算 MD5
-class Md5Util {
-  /// 计算文件 MD5（32 位小写 hex），默认在单独 Isolate 中执行
+class FileUtil {
+  /// 计算文件 MD5（32 位大写 hex），默认在单独 Isolate 中执行
   static Future<String> fileMd5(
       String path, {
         bool useIsolate = true,
