@@ -81,7 +81,7 @@ class _AppRootState extends State<AppRoot> {
 
     _splashController.updateMessage('正在初始化数据库...');
     // TODO: 清空表数据
-    await DatabaseUtil.clearTable();
+    // await DatabaseUtil.clearTable();
 
     _splashController.updateMessage('正在检查更新...');
     final info = await PackageInfo.fromPlatform();
@@ -127,7 +127,7 @@ class _AppRootState extends State<AppRoot> {
       return;
     }
 
-    const isUpload = false;
+    const isUpload = true;
 
     final prodService = ImageSyncService(isUpload: isUpload);
     await prodService.syncAllImages(appConfig);

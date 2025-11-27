@@ -10,9 +10,15 @@ import 'package:watermarker_v2/data/sqflite_media_index.dart';
 import 'package:watermarker_v2/api/upload_api.dart';
 import 'package:watermarker_v2/utils/device_util.dart';
 
+import 'package:watermarker_v2/api/upload_chunk_api.dart';
+import 'package:watermarker_v2/models/upload_chunk_model.dart';
+
+import '../utils/upload_util.dart';
+
 class ImageSyncService {
   final LocalMediaIndex localIndex;
   final UploadApi uploadApi;
+  final UploadChunkApi uploadChunkApi;
   final bool isUpload;
 
   String? _deviceModelCache;
@@ -20,10 +26,12 @@ class ImageSyncService {
   ImageSyncService({
     LocalMediaIndex? localIndex,
     UploadApi? uploadApi,
+    UploadChunkApi? uploadChunkApi,
     bool? isTest,
     bool? isUpload,
   }) : localIndex = localIndex ?? SqfliteMediaIndex(),
        uploadApi = uploadApi ?? UploadApi(),
+       uploadChunkApi = uploadChunkApi ?? UploadChunkApi(),
        isUpload = isUpload ?? true;
 
   Future<String> _ensureDeviceModel() async {
@@ -126,42 +134,77 @@ class ImageSyncService {
         return;
       }
 
-      // 优先检测 fingerprint
-      final fp = await file.fingerprint();
-      final fingerUploadedStatus = await uploadApi.checkUploaded(
-        fingerprint: fp,
-      );
-      if (fingerUploadedStatus.uploaded == true) {
+      // 判断是否是「大视频」
+      final bool isBigVideo =
+          asset.type == AssetType.video &&
+          await getAssetSize(asset) > 10 * 1024 * 1024;
+
+      // =========================
+      // 图片 或 小于等于 10MB 的视频
+      // =========================
+      if (!isBigVideo) {
+        // 1. 基于 fingerprint + md5 检测秒传
+        final instant = await UploadUtil.checkFingerprintAndMd5InstantUpload(
+          file: file,
+          uploadApi: uploadApi,
+          localIndex: localIndex,
+          assetId: asset.id,
+        );
+
+        if (instant.uploaded) {
+          // 秒传命中，已经在 util 里 markUploaded+日志，直接返回
+          return;
+        }
+
+        if (!isUpload) {
+          debugPrint('[ImageSync] 跳过上传: ${asset.id}');
+          return;
+        }
+
+        // 2. 秒传未命中，使用原有的 uploadToGallery 上传整文件
+        await uploadApi.uploadToGallery(
+          filePath: file.path,
+          etag: instant.md5 ?? '', // util 已经算过 md5
+          fingerprint: instant.fingerprint,
+        );
         await localIndex.markUploaded(asset.id);
-        debugPrint('[ImageSync] fingerprint 秒传命中: ${asset.id}');
+        debugPrint('[ImageSync] 上传成功: ${asset.id}');
         return;
       }
 
-      // fingerprint 秒传未命中，尝试 md5 秒传
-      final md5 = await file.md5();
-      final md5UploadedStatus = await uploadApi.checkUploaded(
-        etag: md5,
-        fingerprint: fp,
+      // =========================
+      // 大于 10MB 的视频：只做 fingerprint 秒传 + 分片上传
+      // =========================
+
+      // 1. 仅 fingerprint 秒传检测
+      final fpResult = await UploadUtil.checkFingerprintInstantUpload(
+        file: file,
+        uploadApi: uploadApi,
+        localIndex: localIndex,
+        assetId: asset.id,
       );
-      if (md5UploadedStatus.uploaded == true) {
-        await localIndex.markUploaded(asset.id);
-        debugPrint('[ImageSync] md5 秒传命中: ${asset.id}');
+
+      if (fpResult.uploaded) {
+        // 秒传命中，已经在 util 里 markUploaded+日志，直接返回
         return;
       }
 
       if (!isUpload) {
-        debugPrint('[ImageSync] 跳过上传: ${asset.id}');
+        debugPrint('[ImageSync] 跳过上传(大视频): ${asset.id}');
         return;
       }
 
-      // 秒传未命中，开始上传
-      await uploadApi.uploadToGallery(
-        filePath: file.path,
-        etag: md5,
-        fingerprint: fp,
+      // 2. 分片上传
+      final int fileSize = await getAssetSize(asset);
+
+      await UploadUtil.uploadVideoInChunks(
+        file: file,
+        fingerprint: fpResult.fingerprint,
+        fileSize: fileSize,
+        uploadChunkApi: uploadChunkApi,
+        localIndex: localIndex,
+        assetId: asset.id,
       );
-      await localIndex.markUploaded(asset.id);
-      debugPrint('[ImageSync] 上传成功: ${asset.id}');
     } catch (e, s) {
       debugPrint('[ImageSync] 上传失败: ${asset.id}, error=$e');
       debugPrint('$s');
