@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:watermarker_v2/models/upload_status_model.dart';
+import 'package:watermarker_v2/utils/device_util.dart';
 import 'api_client.dart';
 
 /// 上传相关 API
@@ -38,12 +39,14 @@ class UploadApi extends ApiClient {
     required String filePath,
     required String etag,
     required String fingerprint,
+    String? device,
   }) async {
     // 先构造表单
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       'etag': etag,
       'fingerprint': fingerprint,
+      'device': device ?? await DeviceUtil.getDeviceModel(),
     });
 
     // 这里我们只关心成功/失败，不关心返回的 data
