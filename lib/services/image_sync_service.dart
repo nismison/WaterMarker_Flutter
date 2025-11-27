@@ -149,14 +149,19 @@ class ImageSyncService {
         return;
       }
 
-      // 秒传未命中，开始上传
-      if (isUpload) {
-        await uploadApi.uploadToGallery(filePath: file.path, etag: md5, fingerprint: fp);
-        await localIndex.markUploaded(asset.id);
-        debugPrint('[ImageSync] 上传成功: ${asset.id}');
-      } else {
+      if (!isUpload) {
         debugPrint('[ImageSync] 跳过上传: ${asset.id}');
+        return;
       }
+
+      // 秒传未命中，开始上传
+      await uploadApi.uploadToGallery(
+        filePath: file.path,
+        etag: md5,
+        fingerprint: fp,
+      );
+      await localIndex.markUploaded(asset.id);
+      debugPrint('[ImageSync] 上传成功: ${asset.id}');
     } catch (e, s) {
       debugPrint('[ImageSync] 上传失败: ${asset.id}, error=$e');
       debugPrint('$s');
