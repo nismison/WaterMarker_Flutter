@@ -55,16 +55,26 @@ class ImagePickerProvider extends ChangeNotifier {
       ..clear()
       ..addAll(limit.map((p) => XFile(p)));
 
+    if (_pickedImages.length <= 1) {
+      autoMerge = false;
+    }
+
     notifyListeners();
   }
 
   Future<void> addImages(List<XFile> images) async {
     _pickedImages.addAll(images.take(maxImages - _pickedImages.length));
+    if (_pickedImages.length <= 1) {
+      autoMerge = false;
+    }
     notifyListeners();
   }
 
   void removeImage(int index) {
     _pickedImages.removeAt(index);
+    if (_pickedImages.length <= 1) {
+      autoMerge = false;
+    }
     notifyListeners();
   }
 

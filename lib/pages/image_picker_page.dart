@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
@@ -20,6 +21,7 @@ import 'package:watermarker_v2/utils/watermark/watermark_generator.dart';
 import 'package:watermarker_v2/widgets/date_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
+import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
 import 'advanced_image_preview_page.dart';
 
 class ImagePickerPage extends StatefulWidget {
@@ -354,40 +356,37 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 onPress: null,
               ),
 
-              FTile(
+              if (provider.pickedImages.length > 1) FTile(
                 prefix: const Icon(FIcons.grid3x3, size: 22),
                 title: const Text('自动拼接'),
                 details: Text(provider.autoMerge ? "已启用" : "已禁用"),
-                suffix: provider.autoMerge ? const Icon(
-                  FIcons.squareCheck,
-                  color: Colors.green,
-                  size: 26,
-                ): const Icon(
-                  FIcons.square,
-                  color: Colors.grey,
-                  size: 26,
-                ),
+                suffix: provider.autoMerge
+                    ? const Icon(
+                        FIcons.squareCheck,
+                        color: Colors.green,
+                        size: 26,
+                      )
+                    : const Icon(FIcons.square, color: Colors.grey, size: 26),
                 onPress: () {
                   provider.autoMerge = !provider.autoMerge;
                   provider.randomize = false;
                 },
               ),
 
-              if (provider.autoMerge) FTile(
-                prefix: const Icon(FIcons.dices, size: 22),
-                title: const Text('随机打乱顺序'),
-                details: Text(provider.randomize ? "已启用" : "已禁用"),
-                suffix: provider.randomize ? const Icon(
-                  FIcons.squareCheck,
-                  color: Colors.green,
-                  size: 26,
-                ): const Icon(
-                  FIcons.square,
-                  color: Colors.grey,
-                  size: 26,
+              if (provider.autoMerge)
+                FTile(
+                  prefix: const Icon(FIcons.dices, size: 22),
+                  title: const Text('随机打乱顺序'),
+                  details: Text(provider.randomize ? "已启用" : "已禁用"),
+                  suffix: provider.randomize
+                      ? const Icon(
+                          FIcons.squareCheck,
+                          color: Colors.green,
+                          size: 26,
+                        )
+                      : const Icon(FIcons.square, color: Colors.grey, size: 26),
+                  onPress: () => provider.randomize = !provider.randomize,
                 ),
-                onPress: () => provider.randomize = !provider.randomize,
-              ),
             ],
           ),
 
@@ -438,17 +437,21 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
 
     final List<String> watermarkedPaths = [];
 
+    // 建议不要直接改 provider 的列表，避免影响其它地方逻辑
+    final List<XFile> images = List<XFile>.from(provider.pickedImages);
+
     final loading = GlobalLoading();
     loading.show(context, text: "开始生成...");
 
     debugPrint("开始生成...");
     debugPrint("时间：$datetime");
     debugPrint("用户编号：$userNumber");
-    debugPrint("选择图片数：${provider.pickedImages.length}");
+    debugPrint("选择图片数：${images.length}");
+    debugPrint("randomize: $randomize, autoMerge: $autoMerge");
 
-    for (int i = 0; i < provider.pickedImages.length; i++) {
-      loading.update("正在生成(${i + 1}/${provider.pickedImages.length})");
-      final XFile xfile = provider.pickedImages[i];
+    for (int i = 0; i < images.length; i++) {
+      loading.update("正在生成(${i + 1}/${images.length})");
+      final XFile xfile = images[i];
       final File inputFile = File(xfile.path);
 
       try {
@@ -457,6 +460,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
           name: name,
           userNumber: userNumber,
           datetime: datetime,
+          // minuteOffset 跟随打乱之后的顺序
           minuteOffset: i * 2,
         );
         watermarkedPaths.add(watermarkedPath);
@@ -467,16 +471,51 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       }
     }
 
+    if (randomize && watermarkedPaths.length > 1) {
+      // 随机打乱顺序
+      watermarkedPaths.shuffle(Random());
+    }
+
+    String? mergedPath;
+
+    // 自动拼接逻辑（只在有至少两张图时才有意义）
+    if (autoMerge && watermarkedPaths.length > 1) {
+      try {
+        loading.update("正在拼接图片...");
+        mergedPath = await mergeImagesGridToFileInIsolate(
+          watermarkedPaths,
+          targetWidth: 1500,
+          padding: 0,
+        );
+        debugPrint("图片拼接完成：$mergedPath");
+      } catch (e, st) {
+        debugPrint("图片拼接失败: $e");
+        debugPrint(st.toString());
+        Fluttertoast.showToast(
+          msg: "图片拼接失败，请查看日志",
+          backgroundColor: Colors.red,
+        );
+      }
+    }
+
     loading.hide();
     debugPrint("全部图片生成完成");
 
-    if (context.mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => WatermarkPreviewPage(imagePaths: watermarkedPaths),
-        ),
-      );
+    if (!context.mounted) return;
+
+    // 如果 autoMerge 成功，则只预览合成后的那一张，否则预览全部生成图
+    final List<String> previewPaths;
+    if (autoMerge && mergedPath != null) {
+      previewPaths = [mergedPath];
+    } else {
+      previewPaths = watermarkedPaths;
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WatermarkPreviewPage(imagePaths: previewPaths),
+      ),
+    );
   }
 }
