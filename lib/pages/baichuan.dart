@@ -60,8 +60,7 @@ class _WorkOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: FCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,13 +230,42 @@ class _PendingAcceptListState extends State<PendingAcceptList>
                       ),
                     ),
                   )
-                : ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: _data.length,
-                    itemBuilder: (context, index) {
-                      final item = _data[index];
-                      return _WorkOrderCard(order: item);
-                    },
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: _data.length,
+                          itemBuilder: (context, index) {
+                            final item = _data[index];
+                            return _WorkOrderCard(order: item);
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        child: FButton(
+                          style: context.theme.buttonStyles.primary
+                              .copyWith(
+                            contentStyle: context
+                                .theme
+                                .buttonStyles
+                                .primary
+                                .contentStyle
+                                .copyWith(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 20,
+                                horizontal: 15,
+                              ),
+                            )
+                                .call,
+                          )
+                              .call,
+                          onPress: () {},
+                          child: const Text('一键接单'),
+                        ),
+                      ),
+                    ],
                   )),
     );
   }
@@ -359,13 +387,42 @@ class _PendingProcessListState extends State<PendingProcessList>
                       ),
                     ),
                   )
-                : ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: _data.length,
-                    itemBuilder: (context, index) {
-                      final item = _data[index];
-                      return _WorkOrderCard(order: item);
-                    },
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: _data.length,
+                          itemBuilder: (context, index) {
+                            final item = _data[index];
+                            return _WorkOrderCard(order: item);
+                          },
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        child: FButton(
+                          style: context.theme.buttonStyles.primary
+                              .copyWith(
+                            contentStyle: context
+                                .theme
+                                .buttonStyles
+                                .primary
+                                .contentStyle
+                                .copyWith(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 20,
+                                horizontal: 15,
+                              ),
+                            )
+                                .call,
+                          )
+                              .call,
+                          onPress: () {},
+                          child: const Text('一键关单'),
+                        ),
+                      ),
+                    ],
                   )),
     );
   }
