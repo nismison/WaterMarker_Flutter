@@ -3,6 +3,8 @@ import 'package:forui/forui.dart';
 import 'package:watermarker_v2/pages/image_picker_page.dart';
 import 'package:watermarker_v2/widgets/sliding_bottom_nav_bar.dart';
 
+import 'baichuan.dart';
+
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -15,7 +17,8 @@ class _HomeShellState extends State<HomeShell> {
 
   final List<Widget> _pages = const [
     ImagePickerPage(),
-    Placeholder(),
+    BaichuanPage(),
+    Placeholder()
   ];
 
   @override
@@ -32,6 +35,10 @@ class _HomeShellState extends State<HomeShell> {
           SlidingNavBarItem(
             icon: FIcons.notepadText,
             label: '百川工单',
+          ),
+          SlidingNavBarItem(
+            icon: FIcons.settings2,
+            label: '设置',
           ),
         ],
       ),

@@ -97,6 +97,8 @@ flutter:
     - assets/icons/location_icon.png
     - assets/icons/appicon.png
     - assets/animations/splash_loading.json
+    - assets/animations/empty_ghost.json
+    - assets/animations/loading_files.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
