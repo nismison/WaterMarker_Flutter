@@ -198,7 +198,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
       ),
 
       child: ListView(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 0),
         children: [
           // -------------------------------------------------------------------
           // 图片 grid
@@ -356,7 +356,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
 
           // 生成按钮
           FButton(
