@@ -4,14 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import 'package:watermarker_v2/providers/app_config_provider.dart';
-import 'package:watermarker_v2/utils/file_util.dart';
 import 'package:watermarker_v2/data/local_media_index.dart';
 import 'package:watermarker_v2/data/sqflite_media_index.dart';
 import 'package:watermarker_v2/api/upload_api.dart';
 import 'package:watermarker_v2/utils/device_util.dart';
 
 import 'package:watermarker_v2/api/upload_chunk_api.dart';
-import 'package:watermarker_v2/models/upload_chunk_model.dart';
 
 import '../utils/upload_util.dart';
 
@@ -62,6 +60,7 @@ class ImageSyncService {
     debugPrint('[ImageSync] 当前设备型号: $deviceModel，开始扫描');
 
     // 1. 扫描所有 assetId（极快）
+    PhotoManager.setIgnorePermissionCheck(true);
     final assets = await _scanAllAssets();
     debugPrint('[ImageSync] 扫描完成，共 ${assets.length} 个资源');
 
