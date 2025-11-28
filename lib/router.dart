@@ -1,5 +1,6 @@
 import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
+import 'package:watermarker_v2/pages/home_shell.dart';
 import 'pages/image_picker_page.dart';
 import 'pages/select_images_page.dart';
 
@@ -10,6 +11,12 @@ class AppRouter {
     // 主界面
     router.define(
       '/',
+      handler: Handler(handlerFunc: (_, _) => const HomeShell()),
+    );
+
+    // 选择图片页面
+    router.define(
+      '/image_picker',
       handler: Handler(handlerFunc: (_, _) => const ImagePickerPage()),
     );
 
