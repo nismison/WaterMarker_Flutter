@@ -13,56 +13,41 @@ class DeviceUtil {
   static final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
 
   /// 获取设备型号（带品牌），失败时返回 "Unknown Device"
-  static Future<String> getDeviceModel() async {
+  static Future<String> getDeviceModel({bool onlyModel = false}) async {
     try {
-      if (Platform.isAndroid) {
-        final android = await _deviceInfo.androidInfo;
+      final android = await _deviceInfo.androidInfo;
 
-        // 原始值
-        final rawBrand = (android.brand).trim();
-        final rawModel = (android.model).trim();
+      // 原始值
+      final rawBrand = (android.brand).trim();
+      final rawModel = (android.model).trim();
 
-        // 规范化：
-        // brand 全小写，如 "xiaomi" / "huawei"
-        // model 全大写，如 "24069RA21C" / "ADY-AL10"
-        final brand = rawBrand.isNotEmpty ? rawBrand.toLowerCase() : '';
-        final model = rawModel.isNotEmpty ? rawModel.toUpperCase() : '';
+      // 规范化：
+      // brand 全小写，如 "xiaomi" / "huawei"
+      // model 全大写，如 "24069RA21C" / "ADY-AL10"
+      final brand = rawBrand.isNotEmpty ? rawBrand.toLowerCase() : '';
+      final model = rawModel.isNotEmpty ? rawModel.toUpperCase() : '';
 
-        if (brand.isNotEmpty && model.isNotEmpty) {
-          return '$brand $model';
-        } else if (model.isNotEmpty) {
-          return model; // 只返回大写型号
+      if (onlyModel) {
+        // 只要 model，没拿到 model 时再退化为 brand 或默认值
+        if (model.isNotEmpty) {
+          return model;
         } else if (brand.isNotEmpty) {
-          return brand; // 只返回小写品牌
+          return brand;
         } else {
           return 'Android Unknown';
         }
       }
 
-      if (Platform.isIOS) {
-        final ios = await _deviceInfo.iosInfo;
-        final name = (ios.name).trim(); // 设备名
-        final machine = (ios.utsname.machine).trim(); // 硬件型号 "iPhone16,2"
-
-        // iOS 这边我保持原样，不做大小写转换，如需也统一可以再调
-        if (name.isNotEmpty && machine.isNotEmpty) {
-          return '$name $machine';
-        } else if (machine.isNotEmpty) {
-          return machine;
-        } else if (name.isNotEmpty) {
-          return name;
-        } else {
-          return 'iOS Unknown';
-        }
+      // 默认行为：返回 "brand model" 或退化逻辑
+      if (brand.isNotEmpty && model.isNotEmpty) {
+        return '$brand $model';
+      } else if (model.isNotEmpty) {
+        return model; // 只返回大写型号
+      } else if (brand.isNotEmpty) {
+        return brand; // 只返回小写品牌
+      } else {
+        return 'Android Unknown';
       }
-
-      // 其他平台（web / desktop）
-      final info = await _deviceInfo.deviceInfo;
-      final model = info.data['model']?.toString().trim();
-      if (model != null && model.isNotEmpty) {
-        return model;
-      }
-      return 'Unknown Device';
     } catch (e) {
       return 'Unknown Device';
     }
