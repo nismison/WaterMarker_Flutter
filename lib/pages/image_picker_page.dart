@@ -302,7 +302,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             },
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // -------------------------------------------------------------------
           // 下面表单项不变

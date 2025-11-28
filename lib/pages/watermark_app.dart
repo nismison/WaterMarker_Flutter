@@ -20,34 +20,38 @@ class WatermarkApp extends StatelessWidget {
     final theme = baseTheme.copyWith(
       tileGroupStyle: baseTheme.tileGroupStyle
           .copyWith(
-        tileStyle: baseTheme.tileGroupStyle.tileStyle
-            .copyWith(
-          decoration: baseTheme.tileGroupStyle.tileStyle.decoration,
-          contentStyle: baseTheme.tileGroupStyle.tileStyle.contentStyle
-              .copyWith(
-            padding: const EdgeInsets.symmetric(
-              vertical: 20,
-              horizontal: 15,
+            decoration: baseTheme.tileGroupStyle.decoration.copyWith(
+              border: Border.all(width: 0, color: Colors.transparent),
+              borderRadius: BorderRadius.zero,
             ),
+            tileStyle: baseTheme.tileGroupStyle.tileStyle
+                .copyWith(
+                  decoration: baseTheme.tileGroupStyle.tileStyle.decoration,
+                  contentStyle: baseTheme.tileGroupStyle.tileStyle.contentStyle
+                      .copyWith(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 15,
+                        ),
+                      )
+                      .call,
+                )
+                .call,
           )
-              .call,
-        )
-            .call,
-      )
           .call,
       modalSheetStyle: baseTheme.modalSheetStyle
           .copyWith(
-        barrierFilter: (animation) => ImageFilter.compose(
-          outer: ImageFilter.blur(
-            sigmaX: animation * 5,
-            sigmaY: animation * 5,
-          ),
-          inner: ColorFilter.mode(
-            baseTheme.colors.barrier,
-            BlendMode.srcOver,
-          ),
-        ),
-      )
+            barrierFilter: (animation) => ImageFilter.compose(
+              outer: ImageFilter.blur(
+                sigmaX: animation * 5,
+                sigmaY: animation * 5,
+              ),
+              inner: ColorFilter.mode(
+                baseTheme.colors.barrier,
+                BlendMode.srcOver,
+              ),
+            ),
+          )
           .call,
       scaffoldStyle: FScaffoldStyle(
         systemOverlayStyle: const SystemUiOverlayStyle(),
@@ -58,29 +62,29 @@ class WatermarkApp extends StatelessWidget {
       ).call,
       headerStyles: baseTheme.headerStyles
           .copyWith(
-        rootStyle: baseTheme.headerStyles.rootStyle
-            .copyWith(
-          padding: const EdgeInsets.symmetric(
-            vertical: 5,
-            horizontal: 15,
-          ),
-        )
-            .call,
-      )
+            rootStyle: baseTheme.headerStyles.rootStyle
+                .copyWith(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 5,
+                    horizontal: 15,
+                  ),
+                )
+                .call,
+          )
           .call,
       dialogRouteStyle: baseTheme.dialogRouteStyle
           .copyWith(
-        barrierFilter: (animation) => ImageFilter.compose(
-          outer: ImageFilter.blur(
-            sigmaX: animation * 5,
-            sigmaY: animation * 5,
-          ),
-          inner: ColorFilter.mode(
-            baseTheme.colors.barrier,
-            BlendMode.srcOver,
-          ),
-        ),
-      )
+            barrierFilter: (animation) => ImageFilter.compose(
+              outer: ImageFilter.blur(
+                sigmaX: animation * 5,
+                sigmaY: animation * 5,
+              ),
+              inner: ColorFilter.mode(
+                baseTheme.colors.barrier,
+                BlendMode.srcOver,
+              ),
+            ),
+          )
           .call,
     );
 
