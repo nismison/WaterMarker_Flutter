@@ -311,7 +311,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
             divider: FItemDivider.full,
             children: [
               FTile(
-                prefix: const Text('📅'),
+                prefix: const Icon(FIcons.calendarDays, size: 22),
                 title: const Text('水印日期'),
                 details: Text(dateText),
                 suffix: const Icon(FIcons.chevronRight),
@@ -322,7 +322,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 ),
               ),
               FTile(
-                prefix: const Text('🕐'),
+                prefix: const Icon(FIcons.calendarClock, size: 22),
                 title: const Text('水印时间'),
                 details: Text(timeText),
                 suffix: const Icon(FIcons.chevronRight),
@@ -333,7 +333,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 ),
               ),
               FTile(
-                prefix: const Text('👤'),
+                prefix: const Icon(FIcons.userPen, size: 22),
                 title: const Text('姓名'),
                 details: Text(provider.selectedUserName),
                 suffix: const Icon(FIcons.chevronRight),
@@ -352,6 +352,41 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
                 suffix: const Icon(FIcons.lockKeyhole, color: Colors.grey),
                 enabled: false,
                 onPress: null,
+              ),
+
+              FTile(
+                prefix: const Icon(FIcons.grid3x3, size: 22),
+                title: const Text('自动拼接'),
+                details: Text(provider.autoMerge ? "已启用" : "已禁用"),
+                suffix: provider.autoMerge ? const Icon(
+                  FIcons.squareCheck,
+                  color: Colors.green,
+                  size: 26,
+                ): const Icon(
+                  FIcons.square,
+                  color: Colors.grey,
+                  size: 26,
+                ),
+                onPress: () {
+                  provider.autoMerge = !provider.autoMerge;
+                  provider.randomize = false;
+                },
+              ),
+
+              if (provider.autoMerge) FTile(
+                prefix: const Icon(FIcons.dices, size: 22),
+                title: const Text('随机打乱顺序'),
+                details: Text(provider.randomize ? "已启用" : "已禁用"),
+                suffix: provider.randomize ? const Icon(
+                  FIcons.squareCheck,
+                  color: Colors.green,
+                  size: 26,
+                ): const Icon(
+                  FIcons.square,
+                  color: Colors.grey,
+                  size: 26,
+                ),
+                onPress: () => provider.randomize = !provider.randomize,
               ),
             ],
           ),
@@ -398,6 +433,8 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     final DateTime datetime = provider.combinedDateTime;
     final String userNumber = provider.selectedUserNumber;
     final String name = (provider.selectedUser!.name).toString();
+    final bool autoMerge = provider.autoMerge;
+    final bool randomize = provider.randomize;
 
     final List<String> watermarkedPaths = [];
 

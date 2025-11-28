@@ -23,6 +23,26 @@ class ImagePickerProvider extends ChangeNotifier {
 
   bool get canAddMore => _pickedImages.length < maxImages;
 
+  bool _autoMerge = false;  // 是否自动合并
+
+  bool get autoMerge => _autoMerge;
+
+  set autoMerge(bool value) {
+    if (_autoMerge == value) return;
+    _autoMerge = value;
+    notifyListeners();
+  }
+
+  bool _randomize = false;  // 是否随机打乱顺序
+
+  bool get randomize => _randomize;
+
+  set randomize(bool value) {
+    if (_randomize == value) return;
+    _randomize = value;
+    notifyListeners();
+  }
+
   void setSelected(List<String> paths) {
     // 去重
     final unique = paths.toSet().toList();
