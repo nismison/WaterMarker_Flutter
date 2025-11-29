@@ -51,7 +51,7 @@ class UserApi extends ApiClient {
   ///   - 抽取 data => Map< String, dynamic >，这里就是 { "items": [ ... ] }
   Future<List<UserInfoModel>> listUsers() async {
     final data = await safeCall(
-          () => dio.get('/api/fm/users'),
+          () => dio.post('/api/fm/users'),
     );
 
     final items = (data['items'] as List<dynamic>? ?? []);

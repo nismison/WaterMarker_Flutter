@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:lottie/lottie.dart';
 
 import 'package:watermarker_v2/api/fm_api.dart';
+import 'package:watermarker_v2/utils/loading_manager.dart';
 
 import '../../models/fm_model.dart';
 
@@ -48,18 +50,23 @@ class _WorkOrder {
   final String title;
   final String location;
   final String timeout; // yyyy-MM-dd hh:mm:ss
+  final String orderType;
+  final String orderId;
 
   const _WorkOrder({
     required this.title,
     required this.location,
     required this.timeout,
+    required this.orderType,
+    required this.orderId,
   });
 }
 
 class _WorkOrderCard extends StatelessWidget {
   final _WorkOrder order;
+  final VoidCallback? onClosed;
 
-  const _WorkOrderCard({required this.order});
+  const _WorkOrderCard({required this.order, this.onClosed});
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +88,6 @@ class _WorkOrderCard extends StatelessWidget {
             ),
 
             // 2. 分隔符
-            // const FDivider(),
             Container(
               margin: EdgeInsets.symmetric(vertical: 10),
               child: Divider(
@@ -90,25 +96,94 @@ class _WorkOrderCard extends StatelessWidget {
               ),
             ),
 
-            // 3. 具体位置：xxxxx（灰色字体）
-            Text(
-              '具体位置：${order.location}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-
-            const SizedBox(height: 10),
-
-            // 4. 超时时间：（灰色） + 时间（红色）
             Row(
               children: [
-                Text(
-                  '超时时间：',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 3. 具体位置：xxxxx（灰色字体）
+                      Text(
+                        '具体位置：${order.location}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // 4. 超时时间：（灰色） + 时间（红色）
+                      Row(
+                        children: [
+                          Text(
+                            '超时时间：',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            order.timeout,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                Text(
-                  order.timeout,
-                  style: const TextStyle(fontSize: 14, color: Colors.red),
-                ),
+                if (order.orderType == "pending_process")
+                  FButton(
+                    child: Text("关单"),
+                    onPress: () async {
+                      showFDialog(
+                        context: context,
+                        builder: (context, style, animation) => FDialog(
+                          style: style.call,
+                          animation: animation,
+                          direction: Axis.horizontal,
+                          title: const Text('提交工单'),
+                          body: Text('是否提交工单？'),
+                          actions: [
+                            FButton(
+                              style: FButtonStyle.outline(),
+                              onPress: () => Navigator.of(context).pop(),
+                              child: const Text('取消'),
+                            ),
+                            FButton(
+                              onPress: () async {
+                                Navigator.of(context).pop();
+                                GlobalLoading().show(context, text: '正在提交...');
+
+                                try {
+                                  await FmApi().completeTask(
+                                    userName: "梁振卓",
+                                    userNumber: "2409840",
+                                    orderId: order.orderId,
+                                  );
+                                  Fluttertoast.showToast(
+                                    msg: '提交工单成功',
+                                    backgroundColor: Colors.green,
+                                  );
+
+                                  onClosed?.call();
+                                } catch (e) {
+                                  Fluttertoast.showToast(
+                                    msg: '提交工单失败：${e.toString()}',
+                                    backgroundColor: Colors.red,
+                                  );
+                                } finally {
+                                  GlobalLoading().hide();
+                                }
+                              },
+                              child: const Text('提交'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ],
@@ -134,7 +209,7 @@ class PendingAcceptList extends StatelessWidget {
   }
 }
 
-/// 待接工单
+/// 获取待接工单数据
 Future<List<_WorkOrder>> _loadPendingAccept() async {
   final FmApi fmApi = FmApi();
 
@@ -148,6 +223,8 @@ Future<List<_WorkOrder>> _loadPendingAccept() async {
           title: item.title,
           location: item.address ?? "",
           timeout: item.endDealTime ?? "",
+          orderType: "pending_accept",
+          orderId: item.id,
         ),
       )
       .toList();
@@ -169,7 +246,7 @@ class PendingProcessList extends StatelessWidget {
   }
 }
 
-/// 待处理工单
+/// 获取待处理工单数据
 Future<List<_WorkOrder>> _loadPendingProcess() async {
   final FmApi fmApi = FmApi();
 
@@ -183,6 +260,8 @@ Future<List<_WorkOrder>> _loadPendingProcess() async {
           title: item.title,
           location: item.address ?? "",
           timeout: item.endDealTime ?? "",
+          orderType: "pending_process",
+          orderId: item.id,
         ),
       )
       .toList();
@@ -323,7 +402,18 @@ class _WorkOrderListState extends State<WorkOrderList>
                           itemCount: _data.length,
                           itemBuilder: (context, index) {
                             final item = _data[index];
-                            return _WorkOrderCard(order: item);
+                            return _WorkOrderCard(
+                              order: item,
+                              onClosed: () {
+                                // 这里可以用 index，也可以更稳一点，用 orderId 删除
+                                setState(() {
+                                  _data = List<_WorkOrder>.from(_data)
+                                    ..removeWhere(
+                                      (o) => o.orderId == item.orderId,
+                                    );
+                                });
+                              },
+                            );
                           },
                         ),
                       ),

@@ -271,6 +271,7 @@ class FmTaskItem {
 
   /// isCustomer / needCertificate 等 0/1 字段的语义化访问。
   bool get isCustomerBool => isCustomer == 1;
+
   bool get needCertificateBool => needCertificate == 1;
 }
 
@@ -285,9 +286,7 @@ class FmTaskListResult {
   /// 工单列表
   final List<FmTaskItem> items;
 
-  FmTaskListResult({
-    required this.items,
-  });
+  FmTaskListResult({required this.items});
 
   factory FmTaskListResult.fromJson(Map<String, dynamic> json) {
     final dynamic list = json['items'];
@@ -298,11 +297,7 @@ class FmTaskListResult {
         if (e is Map<String, dynamic>) {
           items.add(FmTaskItem.fromJson(e));
         } else if (e is Map) {
-          items.add(
-            FmTaskItem.fromJson(
-              Map<String, dynamic>.from(e),
-            ),
-          );
+          items.add(FmTaskItem.fromJson(Map<String, dynamic>.from(e)));
         }
       }
     }
@@ -311,12 +306,11 @@ class FmTaskListResult {
   }
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'items': items.map((e) => e.toJson()).toList(),
-    };
+    return <String, dynamic>{'items': items.map((e) => e.toJson()).toList()};
   }
 
   bool get isEmpty => items.isEmpty;
+
   bool get isNotEmpty => items.isNotEmpty;
 }
 
@@ -327,14 +321,10 @@ class FmTaskListResult {
 class FmAcceptTaskResult {
   final Map<String, dynamic> raw;
 
-  FmAcceptTaskResult({
-    required this.raw,
-  });
+  FmAcceptTaskResult({required this.raw});
 
   factory FmAcceptTaskResult.fromJson(Map<String, dynamic> json) {
-    return FmAcceptTaskResult(
-      raw: Map<String, dynamic>.from(json),
-    );
+    return FmAcceptTaskResult(raw: Map<String, dynamic>.from(json));
   }
 
   Map<String, dynamic> toJson() => Map<String, dynamic>.from(raw);
@@ -361,4 +351,66 @@ int? _asIntOrNull(dynamic v) {
     return int.tryParse(v);
   }
   return null;
+}
+
+/// 完成工单接口返回的数据模型。
+///
+/// 后端返回：
+/// {
+///   "order_id": "...",
+///   "title": "...",
+///   "user": "...",
+///   "user_number": "...",
+///   "upload_count": 3
+/// }
+class FmCompleteTaskResult {
+  /// 工单 ID
+  final String orderId;
+
+  /// 工单标题
+  final String title;
+
+  /// 处理人名称
+  final String user;
+
+  /// 处理人工号
+  final String userNumber;
+
+  /// 上传的图片/附件数量
+  final int uploadCount;
+
+  /// 原始数据，方便后续扩展或调试
+  final Map<String, dynamic> raw;
+
+  FmCompleteTaskResult({
+    required this.orderId,
+    required this.title,
+    required this.user,
+    required this.userNumber,
+    required this.uploadCount,
+    required this.raw,
+  });
+
+  factory FmCompleteTaskResult.fromJson(Map<String, dynamic> json) {
+    final map = Map<String, dynamic>.from(json);
+
+    return FmCompleteTaskResult(
+      orderId: _asString(map['order_id']),
+      title: _asString(map['title']),
+      user: _asString(map['user']),
+      userNumber: _asString(map['user_number']),
+      uploadCount: _asIntOrNull(map['upload_count']) ?? 0,
+      raw: map,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'order_id': orderId,
+      'title': title,
+      'user': user,
+      'user_number': userNumber,
+      'upload_count': uploadCount,
+    };
+  }
 }
