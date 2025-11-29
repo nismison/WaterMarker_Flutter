@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:watermarker_v2/models/user_info_model.dart';
+import 'package:watermarker_v2/models/users/user_info_model.dart';
 
 /// @description 管理全局图片选择与统一时间、日期
 class ImagePickerProvider extends ChangeNotifier {

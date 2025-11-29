@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:watermarker_v2/api/check_update_api.dart';
-import 'package:watermarker_v2/api/download_api.dart';
+import 'package:watermarker_v2/api/updates/check_update_api.dart';
+import 'package:watermarker_v2/api/uploads/download_api.dart';
 
 class UpdateUtil {
   static const MethodChannel _installChannel = MethodChannel("apk_installer");

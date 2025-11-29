@@ -8,19 +8,19 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 
-import 'package:watermarker_v2/pages/qr_scan_page.dart';
-import 'package:watermarker_v2/pages/watermark_preview_page.dart';
+import 'package:watermarker_v2/pages/tools/qr_scan_page.dart';
+import 'package:watermarker_v2/pages/picker/watermark_preview_page.dart';
 
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
-import 'package:watermarker_v2/utils/image_picker_helper.dart';
-import 'package:watermarker_v2/utils/loading_manager.dart';
-import 'package:watermarker_v2/utils/storage_permission_util.dart';
+import 'package:watermarker_v2/utils/images/image_picker_helper.dart';
+import 'package:watermarker_v2/utils/storage/storage_permission_util.dart';
+import 'package:watermarker_v2/utils/ui/loading_manager.dart';
 import 'package:watermarker_v2/utils/watermark/encryption.dart';
 import 'package:watermarker_v2/utils/watermark/watermark_generator.dart';
-import 'package:watermarker_v2/widgets/date_picker_dialog.dart';
-import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
-import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
+import 'package:watermarker_v2/widgets/dialogs/date_picker_dialog.dart';
+import 'package:watermarker_v2/widgets/dialogs/time_picker_dialog.dart';
+import 'package:watermarker_v2/widgets/dialogs/user_picker_dialog.dart';
 import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
 import 'advanced_image_preview_page.dart';
 

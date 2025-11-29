@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
-import 'package:watermarker_v2/utils/loading_manager.dart';
-
-import 'package:watermarker_v2/utils/storage_util.dart';
+import 'package:watermarker_v2/utils/storage/storage_util.dart';
+import 'package:watermarker_v2/utils/ui/loading_manager.dart';
 import 'advanced_image_preview_page.dart';
 
 class WatermarkPreviewPage extends StatelessWidget {

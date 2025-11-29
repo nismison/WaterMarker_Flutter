@@ -3,8 +3,8 @@
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
-import 'api_client.dart';
-import 'http_client.dart'; // 为了 AppNetworkException
+import 'package:watermarker_v2/api/client/api_client.dart';
+import 'package:watermarker_v2/api/client/http_client.dart'; // 为了 AppNetworkException
 
 class DownloadApi extends ApiClient {
   /// 下载任意文件（APK、zip、bin 等）

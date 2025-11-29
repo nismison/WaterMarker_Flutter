@@ -1,8 +1,8 @@
 import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
-import 'package:watermarker_v2/pages/home_shell.dart';
-import 'pages/image_picker_page.dart';
-import 'pages/select_images_page.dart';
+import 'package:watermarker_v2/pages/app/home_shell.dart';
+import 'pages/picker/image_picker_page.dart';
+import 'pages/picker/select_images_page.dart';
 
 class AppRouter {
   static final FluroRouter router = FluroRouter();

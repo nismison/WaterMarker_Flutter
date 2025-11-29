@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import 'package:watermarker_v2/models/user_info_model.dart';
+import 'package:watermarker_v2/models/users/user_info_model.dart';
 
 /// @description 用户选择弹窗（单列滚轮，基于 List<Map> 数据源）
 ///

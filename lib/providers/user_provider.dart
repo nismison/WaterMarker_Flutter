@@ -2,10 +2,10 @@
 
 import 'package:flutter/foundation.dart';
 
-import 'package:watermarker_v2/api/http_client.dart';
-import 'package:watermarker_v2/api/user_api.dart';
+import 'package:watermarker_v2/api/client/http_client.dart';
+import 'package:watermarker_v2/api/users/user_api.dart';
 
-import 'package:watermarker_v2/models/user_info_model.dart';
+import 'package:watermarker_v2/models/users/user_info_model.dart';
 
 /// 管理用户相关状态的 Provider。
 ///

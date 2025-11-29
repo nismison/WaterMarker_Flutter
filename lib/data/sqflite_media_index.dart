@@ -1,5 +1,5 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:watermarker_v2/utils/database_util.dart';
+import 'package:watermarker_v2/utils/storage/database_util.dart';
 import 'local_media_index.dart';
 import 'local_media_record.dart';
 
