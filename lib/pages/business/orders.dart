@@ -114,178 +114,101 @@ class _WorkOrderCard extends StatelessWidget {
   }
 }
 
-/// =======================
-/// 待接工单列表（下拉刷新 + 保持状态）
-/// =======================
-
-class PendingAcceptList extends StatefulWidget {
+class PendingAcceptList extends StatelessWidget {
   const PendingAcceptList({super.key});
 
   @override
-  State<PendingAcceptList> createState() => _PendingAcceptListState();
-}
-
-class _PendingAcceptListState extends State<PendingAcceptList>
-    with AutomaticKeepAliveClientMixin {
-  List<_WorkOrder> _data = const [];
-
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  @override
-  bool get wantKeepAlive => true; // 关键：Tab 切换时保留状态
-
-  /// TODO：接接口时替换为真实的待接工单请求
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      const mock = [
-        _WorkOrder(
-          title: '巡检机房空调温度异常',
-          location: '上海市浦东新区张江路 123 号 A 楼 3 楼机房',
-          timeout: '2025-11-30 14:30:00',
-        ),
-        _WorkOrder(
-          title: '办公区网络中断',
-          location: '上海市徐汇区零陵路 456 号 2 楼开放办公区',
-          timeout: '2025-11-29 09:00:00',
-        ),
-      ];
-
-      if (!mounted) return;
-      setState(() {
-        _data = mock;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _onRefresh() async {
-    await _loadData();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context); // 和 AutomaticKeepAliveClientMixin 配套
-
-    return RefreshIndicator(
-      onRefresh: _onRefresh,
-      displacement: 0,
-      child: _isLoading && _data.isEmpty
-          ? Center(
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(bottom: 100),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset(
-                      'assets/animations/loading_files.json',
-                      repeat: true,
-                      animate: true,
-                      width: 200,
-                      height: 200,
-                    ),
-                    Text(
-                      '正在加载数据...',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : (_data.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: EdgeInsetsGeometry.only(bottom: 100),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Lottie.asset(
-                            'assets/animations/empty_ghost.json',
-                            repeat: true,
-                            animate: true,
-                            width: 200,
-                            height: 200,
-                          ),
-                          Text(
-                            '暂无待接工单',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: _data.length,
-                          itemBuilder: (context, index) {
-                            final item = _data[index];
-                            return _WorkOrderCard(order: item);
-                          },
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                        child: FButton(
-                          style: context.theme.buttonStyles.primary
-                              .copyWith(
-                            contentStyle: context
-                                .theme
-                                .buttonStyles
-                                .primary
-                                .contentStyle
-                                .copyWith(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 20,
-                                horizontal: 15,
-                              ),
-                            )
-                                .call,
-                          )
-                              .call,
-                          onPress: () {},
-                          child: const Text('一键接单'),
-                        ),
-                      ),
-                    ],
-                  )),
+    return WorkOrderList(
+      loader: _loadPendingAccept, // 回调
+      emptyText: '暂无待接工单',
+      actionText: '一键接单',
+      onAction: () {
+        // TODO: 一键接单逻辑
+      },
     );
   }
 }
 
-/// =======================
-/// 待处理工单列表（下拉刷新 + 保持状态）
-/// =======================
+/// TODO：接真实接口时改这里
+Future<List<_WorkOrder>> _loadPendingAccept() async {
+  await Future.delayed(const Duration(milliseconds: 500));
 
-class PendingProcessList extends StatefulWidget {
+  return const [
+    _WorkOrder(
+      title: '巡检机房空调温度异常',
+      location: '上海市浦东新区张江路 123 号 A 楼 3 楼机房',
+      timeout: '2025-11-30 14:30:00',
+    ),
+    _WorkOrder(
+      title: '办公区网络中断',
+      location: '上海市徐汇区零陵路 456 号 2 楼开放办公区',
+      timeout: '2025-11-29 09:00:00',
+    ),
+  ];
+}
+
+class PendingProcessList extends StatelessWidget {
   const PendingProcessList({super.key});
 
   @override
-  State<PendingProcessList> createState() => _PendingProcessListState();
+  Widget build(BuildContext context) {
+    return WorkOrderList(
+      loader: _loadPendingProcess,
+      emptyText: '暂无待处理工单',
+      actionText: '一键关单',
+      onAction: () {
+        // TODO: 一键关单逻辑
+      },
+    );
+  }
 }
 
-class _PendingProcessListState extends State<PendingProcessList>
+Future<List<_WorkOrder>> _loadPendingProcess() async {
+  await Future.delayed(const Duration(milliseconds: 500));
+
+  return const [
+    _WorkOrder(
+      title: '生产环境磁盘空间告警',
+      location: '上海市虹口区东大名路 789 号 数据中心 2 区',
+      timeout: '2025-11-28 23:59:59',
+    ),
+    _WorkOrder(
+      title: '门禁系统读卡器故障',
+      location: '上海市静安区北京西路 101 号 1 楼大厅',
+      timeout: '2025-11-29 10:15:00',
+    ),
+  ];
+}
+
+class WorkOrderList extends StatefulWidget {
+  /// 真正去加载数据的函数（待接 / 待处理各自实现）
+  final Future<List<_WorkOrder>> Function() loader;
+
+  /// 空数据时的提示文案
+  final String emptyText;
+
+  /// 底部按钮的文案
+  final String actionText;
+
+  /// 底部按钮点击回调
+  final VoidCallback onAction;
+
+  const WorkOrderList({
+    super.key,
+    required this.loader,
+    required this.emptyText,
+    required this.actionText,
+    required this.onAction,
+  });
+
+  @override
+  State<WorkOrderList> createState() => _WorkOrderListState();
+}
+
+class _WorkOrderListState extends State<WorkOrderList>
     with AutomaticKeepAliveClientMixin {
   List<_WorkOrder> _data = const [];
-
   bool _isLoading = false;
 
   @override
@@ -297,31 +220,17 @@ class _PendingProcessListState extends State<PendingProcessList>
   @override
   bool get wantKeepAlive => true;
 
-  /// TODO：接接口时替换为真实的待处理工单请求
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      const mock = [
-        _WorkOrder(
-          title: '生产环境磁盘空间告警',
-          location: '上海市虹口区东大名路 789 号 数据中心 2 区',
-          timeout: '2025-11-28 23:59:59',
-        ),
-        _WorkOrder(
-          title: '门禁系统读卡器故障',
-          location: '上海市静安区北京西路 101 号 1 楼大厅',
-          timeout: '2025-11-29 10:15:00',
-        ),
-      ];
+      final list = await widget.loader(); // 关键：用回调拿数据
 
       if (!mounted) return;
       setState(() {
-        _data = mock;
+        _data = list;
       });
     } finally {
       if (mounted) {
@@ -344,49 +253,61 @@ class _PendingProcessListState extends State<PendingProcessList>
       onRefresh: _onRefresh,
       displacement: 0,
       child: _isLoading && _data.isEmpty
-          ? Center(
-              child: Padding(
-                padding: EdgeInsetsGeometry.only(bottom: 100),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.asset(
-                      'assets/animations/loading_files.json',
-                      repeat: true,
-                      animate: true,
-                      width: 200,
-                      height: 200,
-                    ),
-                    Text(
-                      '正在加载数据...',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  ],
+          // 加载中：用 ListView 包一层，保证可下拉
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Lottie.asset(
+                        'assets/animations/loading_files.json',
+                        repeat: true,
+                        animate: true,
+                        width: 200,
+                        height: 200,
+                      ),
+                      const Text(
+                        '正在加载数据...',
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             )
           : (_data.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: EdgeInsetsGeometry.only(bottom: 100),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Lottie.asset(
-                            'assets/animations/empty_ghost.json',
-                            repeat: true,
-                            animate: true,
-                            width: 200,
-                            height: 200,
-                          ),
-                          Text(
-                            '暂无待处理工单',
-                            style: TextStyle(color: Colors.grey, fontSize: 16),
-                          ),
-                        ],
+                // 空数据：同样用 ListView 包一层
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 100),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Lottie.asset(
+                              'assets/animations/empty_ghost.json',
+                              repeat: true,
+                              animate: true,
+                              width: 200,
+                              height: 200,
+                            ),
+                            Text(
+                              widget.emptyText,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   )
+                // 有数据：列表 + 底部按钮，复用你原来的布局
                 : Column(
                     children: [
                       Expanded(
@@ -400,26 +321,29 @@ class _PendingProcessListState extends State<PendingProcessList>
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
                         child: FButton(
                           style: context.theme.buttonStyles.primary
                               .copyWith(
-                            contentStyle: context
-                                .theme
-                                .buttonStyles
-                                .primary
-                                .contentStyle
-                                .copyWith(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 20,
-                                horizontal: 15,
-                              ),
-                            )
-                                .call,
-                          )
+                                contentStyle: context
+                                    .theme
+                                    .buttonStyles
+                                    .primary
+                                    .contentStyle
+                                    .copyWith(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 20,
+                                        horizontal: 15,
+                                      ),
+                                    )
+                                    .call,
+                              )
                               .call,
-                          onPress: () {},
-                          child: const Text('一键关单'),
+                          onPress: widget.onAction,
+                          child: Text(widget.actionText),
                         ),
                       ),
                     ],
