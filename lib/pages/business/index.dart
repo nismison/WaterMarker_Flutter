@@ -67,6 +67,8 @@ class _IndexPageState extends State<IndexPage> {
                 return;
               }
 
+              if (!mounted) return;
+
               final selectedPaths = await showImagePicker(
                 context,
                 maxSelection: 1,
@@ -132,6 +134,9 @@ class _IndexPageState extends State<IndexPage> {
                 AppPermissions.ensureCameraPermission();
                 return;
               }
+
+              if (!mounted) return;
+
               Navigator.pop(context);
               _scanWithCamera();
             },

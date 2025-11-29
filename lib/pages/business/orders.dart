@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 
 import 'package:watermarker_v2/api/fm_api.dart';
 import 'package:watermarker_v2/utils/loading_manager.dart';
-
-import '../../models/fm_model.dart';
+import 'package:watermarker_v2/providers/work_order_provider.dart';
 
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
@@ -17,7 +17,6 @@ class OrdersPage extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          // 保持你原来的 TabBar 样式不动
           title: const TabBar(
             dividerColor: Color.fromRGBO(229, 229, 229, 0.5),
             indicatorColor: Colors.black87,
@@ -43,30 +42,13 @@ class OrdersPage extends StatelessWidget {
 }
 
 /// =======================
-/// 公共模型 & 卡片组件（样式保持之前那套）
+/// 工单卡片
 /// =======================
 
-class _WorkOrder {
-  final String title;
-  final String location;
-  final String timeout; // yyyy-MM-dd hh:mm:ss
-  final String orderType;
-  final String orderId;
-
-  const _WorkOrder({
-    required this.title,
-    required this.location,
-    required this.timeout,
-    required this.orderType,
-    required this.orderId,
-  });
-}
-
 class _WorkOrderCard extends StatelessWidget {
-  final _WorkOrder order;
-  final VoidCallback? onClosed;
+  final WorkOrder order;
 
-  const _WorkOrderCard({required this.order, this.onClosed});
+  const _WorkOrderCard({required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -89,8 +71,8 @@ class _WorkOrderCard extends StatelessWidget {
 
             // 2. 分隔符
             Container(
-              margin: EdgeInsets.symmetric(vertical: 10),
-              child: Divider(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              child: const Divider(
                 height: 1,
                 color: Color.fromRGBO(229, 229, 229, 0.8),
               ),
@@ -103,15 +85,11 @@ class _WorkOrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // 3. 具体位置：xxxxx（灰色字体）
                       Text(
                         '具体位置：${order.location}',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
-
                       const SizedBox(height: 10),
-
-                      // 4. 超时时间：（灰色） + 时间（红色）
                       Row(
                         children: [
                           Text(
@@ -133,27 +111,33 @@ class _WorkOrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // 只有待处理工单才显示“关单”按钮
                 if (order.orderType == "pending_process")
                   FButton(
-                    child: Text("关单"),
+                    child: const Text("关单"),
                     onPress: () async {
                       showFDialog(
                         context: context,
-                        builder: (context, style, animation) => FDialog(
+                        builder: (dialogContext, style, animation) => FDialog(
                           style: style.call,
                           animation: animation,
                           direction: Axis.horizontal,
                           title: const Text('提交工单'),
-                          body: Text('是否提交工单？'),
+                          body: const Text('是否提交工单？'),
                           actions: [
                             FButton(
                               style: FButtonStyle.outline(),
-                              onPress: () => Navigator.of(context).pop(),
+                              onPress: () => Navigator.of(dialogContext).pop(),
                               child: const Text('取消'),
                             ),
                             FButton(
                               onPress: () async {
-                                Navigator.of(context).pop();
+                                Navigator.of(dialogContext).pop();
+
+                                final workOrderProvider = context
+                                    .read<WorkOrderProvider>();
+
                                 GlobalLoading().show(context, text: '正在提交...');
 
                                 try {
@@ -162,12 +146,15 @@ class _WorkOrderCard extends StatelessWidget {
                                     userNumber: "2409840",
                                     orderId: order.orderId,
                                   );
+
                                   Fluttertoast.showToast(
                                     msg: '提交工单成功',
                                     backgroundColor: Colors.green,
                                   );
 
-                                  onClosed?.call();
+                                  workOrderProvider.removeFromPendingProcess(
+                                    order.orderId,
+                                  );
                                 } catch (e) {
                                   Fluttertoast.showToast(
                                     msg: '提交工单失败：${e.toString()}',
@@ -193,152 +180,132 @@ class _WorkOrderCard extends StatelessWidget {
   }
 }
 
-class PendingAcceptList extends StatelessWidget {
+/// =======================
+/// 待接工单 Tab
+/// =======================
+
+class PendingAcceptList extends StatefulWidget {
   const PendingAcceptList({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return WorkOrderList(
-      loader: _loadPendingAccept, // 回调
-      emptyText: '暂无待接工单',
-      actionText: '一键接单',
-      onAction: () {
-        // TODO: 一键接单逻辑
-      },
-    );
-  }
+  State<PendingAcceptList> createState() => _PendingAcceptListState();
 }
 
-/// 获取待接工单数据
-Future<List<_WorkOrder>> _loadPendingAccept() async {
-  final FmApi fmApi = FmApi();
-
-  final FmTaskListResult result = await fmApi.fetchPendingAccept(
-    userNumber: '2409840',
-  );
-
-  return result.items
-      .map(
-        (item) => _WorkOrder(
-          title: item.title,
-          location: item.address ?? "",
-          timeout: item.endDealTime ?? "",
-          orderType: "pending_accept",
-          orderId: item.id,
-        ),
-      )
-      .toList();
-}
-
-class PendingProcessList extends StatelessWidget {
-  const PendingProcessList({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return WorkOrderList(
-      loader: _loadPendingProcess,
-      emptyText: '暂无待处理工单',
-      actionText: '一键关单',
-      onAction: () {
-        // TODO: 一键关单逻辑
-      },
-    );
-  }
-}
-
-/// 获取待处理工单数据
-Future<List<_WorkOrder>> _loadPendingProcess() async {
-  final FmApi fmApi = FmApi();
-
-  final FmTaskListResult result = await fmApi.fetchPendingProcess(
-    userNumber: '2409840',
-  );
-
-  return result.items
-      .map(
-        (item) => _WorkOrder(
-          title: item.title,
-          location: item.address ?? "",
-          timeout: item.endDealTime ?? "",
-          orderType: "pending_process",
-          orderId: item.id,
-        ),
-      )
-      .toList();
-}
-
-class WorkOrderList extends StatefulWidget {
-  /// 真正去加载数据的函数（待接 / 待处理各自实现）
-  final Future<List<_WorkOrder>> Function() loader;
-
-  /// 空数据时的提示文案
-  final String emptyText;
-
-  /// 底部按钮的文案
-  final String actionText;
-
-  /// 底部按钮点击回调
-  final VoidCallback onAction;
-
-  const WorkOrderList({
-    super.key,
-    required this.loader,
-    required this.emptyText,
-    required this.actionText,
-    required this.onAction,
-  });
-
-  @override
-  State<WorkOrderList> createState() => _WorkOrderListState();
-}
-
-class _WorkOrderListState extends State<WorkOrderList>
+class _PendingAcceptListState extends State<PendingAcceptList>
     with AutomaticKeepAliveClientMixin {
-  List<_WorkOrder> _data = const [];
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // 首次进入时懒加载待接工单
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<WorkOrderProvider>();
+      provider.loadPendingAccept();
+    });
   }
 
   @override
   bool get wantKeepAlive => true;
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Consumer<WorkOrderProvider>(
+      builder: (context, provider, _) {
+        return WorkOrderList(
+          type: 'pending_accept',
+          data: provider.pendingAccept,
+          isLoading: provider.isLoadingPendingAccept,
+          emptyText: '暂无待接工单',
+          actionText: '一键接单',
+          onAction: () {
+            // TODO: 一键接单逻辑，建议也放到 WorkOrderProvider 里
+          },
+          onRefresh: provider.refreshPendingAccept,
+        );
+      },
+    );
+  }
+}
+
+/// =======================
+/// 待处理工单 Tab
+/// =======================
+
+class PendingProcessList extends StatefulWidget {
+  const PendingProcessList({super.key});
+
+  @override
+  State<PendingProcessList> createState() => _PendingProcessListState();
+}
+
+class _PendingProcessListState extends State<PendingProcessList>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  void initState() {
+    super.initState();
+    // 首次进入时懒加载待处理工单
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<WorkOrderProvider>();
+      provider.loadPendingProcess();
     });
-
-    try {
-      final list = await widget.loader(); // 关键：用回调拿数据
-
-      if (!mounted) return;
-      setState(() {
-        _data = list;
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
-  Future<void> _onRefresh() async {
-    await _loadData();
-  }
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
+    return Consumer<WorkOrderProvider>(
+      builder: (context, provider, _) {
+        return WorkOrderList(
+          type: 'pending_process',
+          data: provider.pendingProcess,
+          isLoading: provider.isLoadingPendingProcess,
+          emptyText: '暂无待处理工单',
+          actionText: '一键关单',
+          onAction: () {
+            // TODO: 一键关单逻辑，同样建议放到 Provider
+          },
+          onRefresh: provider.refreshPendingProcess,
+        );
+      },
+    );
+  }
+}
+
+/// =======================
+/// 纯展示型列表组件（不再自己维护 _data 和 loading）
+/// =======================
+
+class WorkOrderList extends StatelessWidget {
+  final List<WorkOrder> data;
+  final bool isLoading;
+  final String emptyText;
+  final String actionText;
+  final VoidCallback onAction;
+  final String type;
+  final Future<void> Function() onRefresh;
+
+  const WorkOrderList({
+    super.key,
+    required this.data,
+    required this.isLoading,
+    required this.emptyText,
+    required this.actionText,
+    required this.onAction,
+    required this.onRefresh,
+    required this.type,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _onRefresh,
+      onRefresh: onRefresh,
       displacement: 0,
-      child: _isLoading && _data.isEmpty
+      child: isLoading && data.isEmpty
           // 加载中：用 ListView 包一层，保证可下拉
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -364,7 +331,7 @@ class _WorkOrderListState extends State<WorkOrderList>
                 ),
               ],
             )
-          : (_data.isEmpty
+          : (data.isEmpty
                 // 空数据：同样用 ListView 包一层
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -382,7 +349,7 @@ class _WorkOrderListState extends State<WorkOrderList>
                               height: 200,
                             ),
                             Text(
-                              widget.emptyText,
+                              emptyText,
                               style: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 16,
@@ -393,27 +360,16 @@ class _WorkOrderListState extends State<WorkOrderList>
                       ),
                     ],
                   )
-                // 有数据：列表 + 底部按钮，复用你原来的布局
+                // 有数据：列表 + 底部按钮
                 : Column(
                     children: [
                       Expanded(
                         child: ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: _data.length,
+                          itemCount: data.length,
                           itemBuilder: (context, index) {
-                            final item = _data[index];
-                            return _WorkOrderCard(
-                              order: item,
-                              onClosed: () {
-                                // 这里可以用 index，也可以更稳一点，用 orderId 删除
-                                setState(() {
-                                  _data = List<_WorkOrder>.from(_data)
-                                    ..removeWhere(
-                                      (o) => o.orderId == item.orderId,
-                                    );
-                                });
-                              },
-                            );
+                            final item = data[index];
+                            return _WorkOrderCard(order: item);
                           },
                         ),
                       ),
@@ -439,8 +395,8 @@ class _WorkOrderListState extends State<WorkOrderList>
                                     .call,
                               )
                               .call,
-                          onPress: widget.onAction,
-                          child: Text(widget.actionText),
+                          onPress: onAction,
+                          child: Text(actionText),
                         ),
                       ),
                     ],
