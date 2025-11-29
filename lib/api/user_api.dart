@@ -6,7 +6,7 @@ import 'package:watermarker_v2/models/user_info_model.dart';
 class UserApi extends ApiClient {
   /// 新增用户
   ///
-  /// 后端：POST /api/users
+  /// 后端：POST /api/fm/users
   /// body: { "name": "...", "userNumber": "1234567" }
   ///
   /// 后端响应（已符合 safeCall 规范）：
@@ -20,7 +20,7 @@ class UserApi extends ApiClient {
   }) async {
     final data = await safeCall(
           () => dio.post(
-        '/api/users',
+        '/api/fm/users',
         data: <String, dynamic>{
           'name': name,
           'userNumber': userNumber,
@@ -34,7 +34,7 @@ class UserApi extends ApiClient {
 
   /// 获取全部用户列表（不分页）
   ///
-  /// 约定后端 GET /api/users 返回：
+  /// 约定后端 GET /api/fm/users 返回：
   /// {
   ///   "success": true,
   ///   "data": {
@@ -51,7 +51,7 @@ class UserApi extends ApiClient {
   ///   - 抽取 data => Map< String, dynamic >，这里就是 { "items": [ ... ] }
   Future<List<UserInfoModel>> listUsers() async {
     final data = await safeCall(
-          () => dio.get('/api/users'),
+          () => dio.get('/api/fm/users'),
     );
 
     final items = (data['items'] as List<dynamic>? ?? []);

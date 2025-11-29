@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:lottie/lottie.dart';
 
+import 'package:watermarker_v2/api/fm_api.dart';
+
+import '../../models/fm_model.dart';
+
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
@@ -130,22 +134,23 @@ class PendingAcceptList extends StatelessWidget {
   }
 }
 
-/// TODO：接真实接口时改这里
+/// 待接工单
 Future<List<_WorkOrder>> _loadPendingAccept() async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  final FmApi fmApi = FmApi();
 
-  return const [
-    _WorkOrder(
-      title: '巡检机房空调温度异常',
-      location: '上海市浦东新区张江路 123 号 A 楼 3 楼机房',
-      timeout: '2025-11-30 14:30:00',
-    ),
-    _WorkOrder(
-      title: '办公区网络中断',
-      location: '上海市徐汇区零陵路 456 号 2 楼开放办公区',
-      timeout: '2025-11-29 09:00:00',
-    ),
-  ];
+  final FmTaskListResult result = await fmApi.fetchPendingAccept(
+    userNumber: '2409840',
+  );
+
+  return result.items
+      .map(
+        (item) => _WorkOrder(
+          title: item.title,
+          location: item.address ?? "",
+          timeout: item.endDealTime ?? "",
+        ),
+      )
+      .toList();
 }
 
 class PendingProcessList extends StatelessWidget {
@@ -164,21 +169,23 @@ class PendingProcessList extends StatelessWidget {
   }
 }
 
+/// 待处理工单
 Future<List<_WorkOrder>> _loadPendingProcess() async {
-  await Future.delayed(const Duration(milliseconds: 500));
+  final FmApi fmApi = FmApi();
 
-  return const [
-    _WorkOrder(
-      title: '生产环境磁盘空间告警',
-      location: '上海市虹口区东大名路 789 号 数据中心 2 区',
-      timeout: '2025-11-28 23:59:59',
-    ),
-    _WorkOrder(
-      title: '门禁系统读卡器故障',
-      location: '上海市静安区北京西路 101 号 1 楼大厅',
-      timeout: '2025-11-29 10:15:00',
-    ),
-  ];
+  final FmTaskListResult result = await fmApi.fetchPendingProcess(
+    userNumber: '2409840',
+  );
+
+  return result.items
+      .map(
+        (item) => _WorkOrder(
+          title: item.title,
+          location: item.address ?? "",
+          timeout: item.endDealTime ?? "",
+        ),
+      )
+      .toList();
 }
 
 class WorkOrderList extends StatefulWidget {
