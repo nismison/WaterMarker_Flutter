@@ -1,6 +1,6 @@
 // lib/api/user_api.dart
 
-import 'package:watermarker_v2/api/api_client.dart';
+import 'package:watermarker_v2/api/base/api_client.dart';
 import 'package:watermarker_v2/models/user_info_model.dart';
 
 class UserApi extends ApiClient {

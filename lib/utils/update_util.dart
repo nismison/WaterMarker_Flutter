@@ -3,8 +3,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:watermarker_v2/api/check_update_api.dart';
-import 'package:watermarker_v2/api/download_api.dart';
+import 'package:watermarker_v2/api/update.dart';
 
 class UpdateUtil {
   static const MethodChannel _installChannel = MethodChannel("apk_installer");
@@ -20,7 +19,7 @@ class UpdateUtil {
   ///   "downloadUrl": "/api/download/app-release.apk"
   /// }
   static Future<Map<String, dynamic>> checkUpdate(String currentVersion) async {
-    final check = await CheckUpdateApi().fetchLatest();
+    final check = await UpdateApi().fetchLatest();
 
     final latestVersion = check.version;
     final nowUrl = check.nowUrl;
@@ -68,7 +67,7 @@ class UpdateUtil {
     String downloadUrl, {
     void Function(double progress)? onProgress,
   }) async {
-    final bytes = await DownloadApi().downloadFile(
+    final bytes = await UpdateApi().downloadFile(
       downloadUrl,
       onProgress: onProgress,
     );

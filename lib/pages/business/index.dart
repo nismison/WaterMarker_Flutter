@@ -8,8 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 
-import 'package:watermarker_v2/pages/qr_scan_page.dart';
-import 'package:watermarker_v2/pages/watermark_preview_page.dart';
+import 'package:watermarker_v2/pages/utils/qr_scan_page.dart';
+import 'package:watermarker_v2/pages/business/marked_preview.dart';
 
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
@@ -22,16 +22,16 @@ import 'package:watermarker_v2/widgets/date_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
 import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
-import 'advanced_image_preview_page.dart';
+import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
 
-class ImagePickerPage extends StatefulWidget {
-  const ImagePickerPage({super.key});
+class IndexPage extends StatefulWidget {
+  const IndexPage({super.key});
 
   @override
-  State<ImagePickerPage> createState() => _ImagePickerPageState();
+  State<IndexPage> createState() => _IndexPageState();
 }
 
-class _ImagePickerPageState extends State<ImagePickerPage> {
+class _IndexPageState extends State<IndexPage> {
   @override
   void initState() {
     super.initState();
@@ -514,7 +514,7 @@ class _ImagePickerPageState extends State<ImagePickerPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => WatermarkPreviewPage(imagePaths: previewPaths),
+        builder: (_) => MarkedPreviewPage(imagePaths: previewPaths),
       ),
     );
   }

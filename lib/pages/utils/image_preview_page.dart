@@ -33,7 +33,7 @@ Future<void> showImagePreview(
     context,
     PageRouteBuilder(
       opaque: false,
-      pageBuilder: (_, _, _) => AdvancedImagePreviewPage(
+      pageBuilder: (_, _, _) => ImagePreviewPage(
         imageList: imageList,
         imagePath: imagePath,
         initialIndex: initialIndex,
@@ -52,7 +52,7 @@ Future<void> showImagePreview(
   );
 }
 
-class AdvancedImagePreviewPage extends StatefulWidget {
+class ImagePreviewPage extends StatefulWidget {
   final List<String>? imageList;
   final String? imagePath;
   final String? tagPrefix;
@@ -60,7 +60,7 @@ class AdvancedImagePreviewPage extends StatefulWidget {
   final bool useHero;
   final Uint8List? thumbnail;
 
-  const AdvancedImagePreviewPage({
+  const ImagePreviewPage({
     super.key,
     this.imageList,
     this.imagePath,
@@ -71,11 +71,11 @@ class AdvancedImagePreviewPage extends StatefulWidget {
   });
 
   @override
-  State<AdvancedImagePreviewPage> createState() =>
-      _AdvancedImagePreviewPageState();
+  State<ImagePreviewPage> createState() =>
+      _ImagePreviewPageState();
 }
 
-class _AdvancedImagePreviewPageState extends State<AdvancedImagePreviewPage>
+class _ImagePreviewPageState extends State<ImagePreviewPage>
     with SingleTickerProviderStateMixin {
   late final ExtendedPageController _pageController;
   late int _currentIndex;

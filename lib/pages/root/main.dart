@@ -1,5 +1,3 @@
-// lib/pages/watermark_app.dart
-
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -10,8 +8,8 @@ import 'package:watermarker_v2/router.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
-class WatermarkApp extends StatelessWidget {
-  const WatermarkApp({super.key});
+class MainPage extends StatelessWidget {
+  const MainPage({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,6 @@
-// lib/providers/user_provider.dart
-
 import 'package:flutter/foundation.dart';
 
-import 'package:watermarker_v2/api/http_client.dart';
+import 'package:watermarker_v2/api/base/http_client.dart';
 import 'package:watermarker_v2/api/user_api.dart';
 
 import 'package:watermarker_v2/models/user_info_model.dart';

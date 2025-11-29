@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:lottie/lottie.dart';
 
-class BaichuanPage extends StatelessWidget {
-  const BaichuanPage({super.key});
+class OrdersPage extends StatelessWidget {
+  const OrdersPage({super.key});
 
   @override
   Widget build(BuildContext context) {

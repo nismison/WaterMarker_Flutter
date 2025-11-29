@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:watermarker_v2/pages/image_picker_page.dart';
+import 'package:watermarker_v2/pages/business/index.dart';
 import 'package:watermarker_v2/widgets/sliding_bottom_nav_bar.dart';
 
-import 'baichuan.dart';
+import '../business/orders.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -16,8 +16,8 @@ class _HomeShellState extends State<HomeShell> {
   int index = 0;
 
   final List<Widget> _pages = const [
-    ImagePickerPage(),
-    BaichuanPage(),
+    IndexPage(),
+    OrdersPage(),
     Placeholder()
   ];
 

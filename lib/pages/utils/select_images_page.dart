@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import 'package:watermarker_v2/widgets/asset_grid_view.dart';
-import 'advanced_image_preview_page.dart';
+import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
 
 class SelectImagesPage extends StatefulWidget {
   final int maxSelection;

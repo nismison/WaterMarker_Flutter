@@ -4,7 +4,7 @@ import 'package:watermarker_v2/providers/user_provider.dart';
 
 import 'providers/app_config_provider.dart';
 import 'providers/image_picker_provider.dart';
-import 'pages/app_root.dart';
+import 'package:watermarker_v2/pages/root/app_root.dart';
 
 Future<void> main() async {
   // 启动 Flutter

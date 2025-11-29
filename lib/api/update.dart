@@ -1,12 +1,20 @@
-// lib/api/download_api.dart
-
+import 'package:watermarker_v2/api/base/api_client.dart';
+import 'package:watermarker_v2/models/check_update_model.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:watermarker_v2/api/base/http_client.dart';
 
-import 'api_client.dart';
-import 'http_client.dart'; // 为了 AppNetworkException
+class UpdateApi extends ApiClient {
+  /// 拉取最新更新信息
+  ///
+  /// 后端必须返回：
+  /// { "success": true, "data": { ... } }
+  Future<CheckUpdateModel> fetchLatest() async {
+    final data = await safeCall(() => dio.get('/api/check_update'));
 
-class DownloadApi extends ApiClient {
+    return CheckUpdateModel.fromJson(data);
+  }
+
   /// 下载任意文件（APK、zip、bin 等）
   ///
   /// 参数为 now_url，即 /api/check_update 返回的:
@@ -16,9 +24,9 @@ class DownloadApi extends ApiClient {
   ///
   /// 如需保存到本地文件，可用 File(...).writeAsBytes(bytes);
   Future<Uint8List> downloadFile(
-    String nowUrl, {
-    void Function(double progress)? onProgress,
-  }) async {
+      String nowUrl, {
+        void Function(double progress)? onProgress,
+      }) async {
     try {
       final res = await dio.get<List<int>>(
         nowUrl,

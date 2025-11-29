@@ -6,12 +6,12 @@ import 'package:forui/forui.dart';
 import 'package:watermarker_v2/utils/loading_manager.dart';
 
 import 'package:watermarker_v2/utils/storage_util.dart';
-import 'advanced_image_preview_page.dart';
+import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
 
-class WatermarkPreviewPage extends StatelessWidget {
+class MarkedPreviewPage extends StatelessWidget {
   final List<String> imagePaths;
 
-  const WatermarkPreviewPage({super.key, required this.imagePaths});
+  const MarkedPreviewPage({super.key, required this.imagePaths});
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:watermarker_v2/api/upload_chunk_api.dart';
+import 'package:watermarker_v2/api/filesync/upload_chunk_api.dart';
 
 import 'package:watermarker_v2/models/upload_chunk_model.dart';
 import 'file_util.dart';

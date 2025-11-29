@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:watermarker_v2/api/api_client.dart';
+import 'package:watermarker_v2/api/base/api_client.dart';
 import 'package:watermarker_v2/models/upload_chunk_model.dart';
 
 /// 分片上传相关接口封装。

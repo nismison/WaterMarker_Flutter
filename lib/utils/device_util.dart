@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 
 /// 设备工具类：用于获取“品牌 + 型号”

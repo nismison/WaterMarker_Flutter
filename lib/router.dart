@@ -1,8 +1,8 @@
 import 'package:fluro/fluro.dart';
 import 'package:flutter/material.dart';
-import 'package:watermarker_v2/pages/home_shell.dart';
-import 'pages/image_picker_page.dart';
-import 'pages/select_images_page.dart';
+import 'package:watermarker_v2/pages/root/home_shell.dart';
+import 'package:watermarker_v2/pages/business/index.dart';
+import 'package:watermarker_v2/pages/utils/select_images_page.dart';
 
 class AppRouter {
   static final FluroRouter router = FluroRouter();
@@ -17,7 +17,7 @@ class AppRouter {
     // 选择图片页面
     router.define(
       '/image_picker',
-      handler: Handler(handlerFunc: (_, _) => const ImagePickerPage()),
+      handler: Handler(handlerFunc: (_, _) => const IndexPage()),
     );
 
     // 选择图片页面
