@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:watermarker_v2/pages/image_picker_page.dart';
-import 'package:watermarker_v2/widgets/sliding_bottom_nav_bar.dart';
+import 'package:watermarker_v2/pages/picker/image_picker_page.dart';
+import 'package:watermarker_v2/widgets/navigation/sliding_bottom_nav_bar.dart';
 
-import 'baichuan.dart';
+import '../ai/baichuan.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});

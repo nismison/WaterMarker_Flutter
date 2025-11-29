@@ -1,5 +1,5 @@
-import 'package:watermarker_v2/api/api_client.dart';
-import 'package:watermarker_v2/models/check_update_model.dart';
+import 'package:watermarker_v2/api/client/api_client.dart';
+import 'package:watermarker_v2/models/updates/check_update_model.dart';
 
 class CheckUpdateApi extends ApiClient {
   /// 拉取最新更新信息

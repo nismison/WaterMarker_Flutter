@@ -1,12 +1,11 @@
-// lib/utils/upload_util.dart
+// lib/utils/uploads/upload_util.dart
 
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:watermarker_v2/api/upload_chunk_api.dart';
-
-import 'package:watermarker_v2/models/upload_chunk_model.dart';
-import 'file_util.dart';
+import 'package:watermarker_v2/api/uploads/upload_chunk_api.dart';
+import 'package:watermarker_v2/models/uploads/upload_chunk_model.dart';
+import 'package:watermarker_v2/utils/storage/file_util.dart';
 
 /// 秒传检测结果：带上 fingerprint / md5，方便后续继续用
 class InstantUploadResult {

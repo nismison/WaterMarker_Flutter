@@ -1,7 +1,7 @@
 // lib/api/user_api.dart
 
-import 'package:watermarker_v2/api/api_client.dart';
-import 'package:watermarker_v2/models/user_info_model.dart';
+import 'package:watermarker_v2/api/client/api_client.dart';
+import 'package:watermarker_v2/models/users/user_info_model.dart';
 
 class UserApi extends ApiClient {
   /// 新增用户

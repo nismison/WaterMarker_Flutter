@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 
-import 'package:watermarker_v2/models/upload_status_model.dart';
-import 'package:watermarker_v2/utils/device_util.dart';
-import 'api_client.dart';
+import 'package:watermarker_v2/api/client/api_client.dart';
+import 'package:watermarker_v2/models/uploads/upload_status_model.dart';
+import 'package:watermarker_v2/utils/device/device_util.dart';
 
 /// 上传相关 API
 class UploadApi extends ApiClient {

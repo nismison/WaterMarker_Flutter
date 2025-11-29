@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:watermarker_v2/pages/select_images_page.dart';
+import 'package:watermarker_v2/pages/picker/select_images_page.dart';
 
 /// 打开图片选择器，返回用户选择的文件路径列表
 ///

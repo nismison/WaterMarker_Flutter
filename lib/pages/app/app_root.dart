@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
-import 'package:watermarker_v2/api/http_client.dart';
+import 'package:watermarker_v2/api/client/http_client.dart';
 import 'package:watermarker_v2/providers/app_config_provider.dart';
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
 import 'package:watermarker_v2/router.dart';
 import 'package:watermarker_v2/services/image_sync_service.dart';
-import 'package:watermarker_v2/utils/database_util.dart';
-import 'package:watermarker_v2/utils/storage_util.dart';
-import 'package:watermarker_v2/utils/update_util.dart';
-import 'splash_page.dart';
+import 'package:watermarker_v2/utils/storage/database_util.dart';
+import 'package:watermarker_v2/utils/storage/storage_util.dart';
+import 'package:watermarker_v2/utils/updates/update_util.dart';
+import '../onboarding/splash_page.dart';
 import 'watermark_app.dart';
 
 /// App 根组件：
