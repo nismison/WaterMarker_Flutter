@@ -83,17 +83,21 @@ class FmCheckinPage extends StatelessWidget {
 class _FmCheckinView extends StatelessWidget {
   const _FmCheckinView();
 
-  /// 秒级时间戳转 yyyy-MM-dd HH:mm:ss
+  /// 秒级时间戳转 HH:mm:ss
   String _formatTimestamp(int? seconds) {
     if (seconds == null || seconds <= 0) return '-';
-    final dt = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+
+    // 假设 seconds 是标准的 Unix 时间戳（秒，UTC）
+    final dtUtc = DateTime.fromMillisecondsSinceEpoch(
+      seconds * 1000,
+      isUtc: true,
+    );
+
+    // 固定转成 UTC+8
+    final dt = dtUtc.add(const Duration(hours: 8));
+
     String two(int v) => v.toString().padLeft(2, '0');
-    return '${dt.year.toString().padLeft(4, '0')}-'
-        '${two(dt.month)}-'
-        '${two(dt.day)} '
-        '${two(dt.hour)}:'
-        '${two(dt.minute)}:'
-        '${two(dt.second)}';
+    return '${two(dt.hour)}:${two(dt.minute)}:${two(dt.second)}';
   }
 
   /// 排班卡片

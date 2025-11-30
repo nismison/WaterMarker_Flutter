@@ -6,6 +6,7 @@ import 'package:watermarker_v2/models/fm_model.dart';
 class WorkOrder {
   final String title;
   final String location;
+  final String sourceName;
   final String timeout; // yyyy-MM-dd hh:mm:ss
   final String orderType; // "pending_accept" / "pending_process"
   final String orderId;
@@ -13,6 +14,7 @@ class WorkOrder {
   const WorkOrder({
     required this.title,
     required this.location,
+    required this.sourceName,
     required this.timeout,
     required this.orderType,
     required this.orderId,
@@ -76,6 +78,7 @@ class WorkOrderProvider extends ChangeNotifier {
               title: item.title,
               location: item.address ?? "",
               timeout: item.endDealTime ?? "",
+              sourceName: item.sourceName ?? "",
               orderType: "pending_accept",
               orderId: item.id,
             ),
@@ -106,6 +109,7 @@ class WorkOrderProvider extends ChangeNotifier {
               title: item.title,
               location: item.address ?? "",
               timeout: item.endDealTime ?? "",
+              sourceName: item.sourceName ?? "",
               orderType: "pending_process",
               orderId: item.id,
             ),

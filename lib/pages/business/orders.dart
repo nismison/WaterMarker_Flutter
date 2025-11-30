@@ -24,17 +24,6 @@ Duration calcTimeoutDiff(String timeout) {
   return timeoutTime.difference(now);
 }
 
-bool isSameDayWithNow(String timeout) {
-  final format = DateFormat('yyyy-MM-dd HH:mm:ss');
-  final DateTime timeoutTime = format.parse(timeout);
-
-  final DateTime now = DateTime.now();
-
-  return timeoutTime.year == now.year &&
-      timeoutTime.month == now.month &&
-      timeoutTime.day == now.day;
-}
-
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
@@ -80,7 +69,7 @@ class _WorkOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      margin: const EdgeInsets.only(bottom: 16),
       child: FCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,9 +80,9 @@ class _WorkOrderCard extends StatelessWidget {
               children: [
                 calcTimeoutDiff(order.timeout).inHours < 2
                     ? _buildStatusPill("即将超时", Colors.red)
-                    : isSameDayWithNow(order.timeout)
+                    : calcTimeoutDiff(order.timeout).inHours < 24
                     ? _buildStatusPill("今日超时", Colors.orange)
-                    : _buildStatusPill("不急", Colors.green),
+                    : _buildStatusPill("无超时风险", Colors.green),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -126,14 +115,23 @@ class _WorkOrderCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(FIcons.mapPin, size: 16),
+                          Icon(FIcons.sparkles, size: 16),
                           SizedBox(width: 5),
                           Text(
-                            '具体位置：${order.location}',
+                            "来源：",
                             style: TextStyle(
                               fontSize: 14,
-                              height: 1.1,
+                              height: 1.4,
                               color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            order.sourceName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -143,23 +141,29 @@ class _WorkOrderCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(FIcons.clockAlert, size: 16),
+                              Icon(FIcons.calendarClock, size: 16),
                               SizedBox(width: 5),
                               Text(
                                 '超时时间：',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  height: 1.1,
+                                  height: 1.4,
                                   color: Colors.grey[600],
                                 ),
                               ),
                             ],
                           ),
                           Text(
-                            order.timeout,
+                            DateFormat('MM-dd HH:mm').format(
+                              DateFormat(
+                                'yyyy-MM-dd HH:mm:ss',
+                              ).parse(order.timeout),
+                            ),
                             style: const TextStyle(
                               fontSize: 14,
+                              height: 1.4,
                               color: Colors.red,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
@@ -170,7 +174,22 @@ class _WorkOrderCard extends StatelessWidget {
 
                 order.orderType == "pending_process"
                     ? FButton(
-                        child: const Text("关单"),
+                        style: context.theme.buttonStyles.primary
+                            .copyWith(
+                              contentStyle: context
+                                  .theme
+                                  .buttonStyles
+                                  .primary
+                                  .contentStyle
+                                  .copyWith(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 10,
+                                      horizontal: 14,
+                                    ),
+                                  )
+                                  .call,
+                            )
+                            .call,
                         onPress: () async {
                           showFDialog(
                             context: context,
@@ -233,9 +252,25 @@ class _WorkOrderCard extends StatelessWidget {
                                 ),
                           );
                         },
+                        child: const Text("关单", style: TextStyle(fontSize: 13)),
                       )
                     : FButton(
-                        child: const Text("接单"),
+                        style: context.theme.buttonStyles.primary
+                            .copyWith(
+                              contentStyle: context
+                                  .theme
+                                  .buttonStyles
+                                  .primary
+                                  .contentStyle
+                                  .copyWith(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: 10,
+                                      horizontal: 14,
+                                    ),
+                                  )
+                                  .call,
+                            )
+                            .call,
                         onPress: () async {
                           final workOrderProvider = context
                               .read<WorkOrderProvider>();
@@ -267,6 +302,7 @@ class _WorkOrderCard extends StatelessWidget {
                             GlobalLoading().hide();
                           }
                         },
+                        child: const Text("接单", style: TextStyle(fontSize: 13)),
                       ),
               ],
             ),
@@ -484,27 +520,24 @@ class WorkOrderList extends StatelessWidget {
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 100),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Lottie.asset(
-                              'assets/animations/empty_ghost.json',
-                              repeat: true,
-                              animate: true,
-                              width: 200,
-                              height: 200,
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Lottie.asset(
+                            'assets/animations/empty_ghost.json',
+                            repeat: true,
+                            animate: true,
+                            width: 200,
+                            height: 200,
+                          ),
+                          Text(
+                            emptyText,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
                             ),
-                            Text(
-                              emptyText,
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   )
@@ -523,7 +556,6 @@ class WorkOrderList extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 16,
                           horizontal: 20,
                         ),
                         child: FButton(
@@ -544,7 +576,10 @@ class WorkOrderList extends StatelessWidget {
                               )
                               .call,
                           onPress: onAction,
-                          child: Text(actionText),
+                          child: Text(
+                            actionText,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ],

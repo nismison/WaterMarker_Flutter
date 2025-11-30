@@ -87,7 +87,7 @@ class MainPage extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: '图片选择 Demo',
+      title: '水印生成器2.0',
       theme: theme.toApproximateMaterialTheme(),
       builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
       onGenerateRoute: AppRouter.router.generator,
