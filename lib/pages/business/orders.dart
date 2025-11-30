@@ -3,10 +3,37 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import 'package:watermarker_v2/api/fm_api.dart';
 import 'package:watermarker_v2/utils/loading_manager.dart';
 import 'package:watermarker_v2/providers/work_order_provider.dart';
+
+/// 解析 timeout 字符串并计算与当前时间的差值
+Duration calcTimeoutDiff(String timeout) {
+  // 如果你的 timeout 是 24 小时制字符串：2025-11-30 18:30:00
+  final format = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+  // 如果你真的用的是 12 小时制（例如 "2025-11-30 06:30:00 PM"）
+  // 就需要：DateFormat('yyyy-MM-dd hh:mm:ss a');
+
+  final DateTime timeoutTime = format.parse(timeout);
+  final DateTime now = DateTime.now();
+
+  // timeout - now：正数表示还有多久超时；负数表示已经超时多久
+  return timeoutTime.difference(now);
+}
+
+bool isSameDayWithNow(String timeout) {
+  final format = DateFormat('yyyy-MM-dd HH:mm:ss');
+  final DateTime timeoutTime = format.parse(timeout);
+
+  final DateTime now = DateTime.now();
+
+  return timeoutTime.year == now.year &&
+      timeoutTime.month == now.month &&
+      timeoutTime.day == now.day;
+}
 
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
@@ -60,13 +87,25 @@ class _WorkOrderCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // 1. 工单标题（加粗黑色字体）
-            Text(
-              order.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+            Row(
+              children: [
+                calcTimeoutDiff(order.timeout).inHours < 2
+                    ? _buildStatusPill("即将超时", Colors.red)
+                    : isSameDayWithNow(order.timeout)
+                    ? _buildStatusPill("今日超时", Colors.orange)
+                    : _buildStatusPill("不急", Colors.green),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    order.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             // 2. 分隔符
@@ -85,19 +124,36 @@ class _WorkOrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        '具体位置：${order.location}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      Row(
+                        children: [
+                          Icon(FIcons.mapPin, size: 16),
+                          SizedBox(width: 5),
+                          Text(
+                            '具体位置：${order.location}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.1,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          Text(
-                            '超时时间：',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                          Row(
+                            children: [
+                              Icon(FIcons.clockAlert, size: 16),
+                              SizedBox(width: 5),
+                              Text(
+                                '超时时间：',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  height: 1.1,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
                           Text(
                             order.timeout,
@@ -215,6 +271,29 @@ class _WorkOrderCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// 状态胶囊：待接单 / 待处理
+  Widget _buildStatusPill(String text, Color bgColor) {
+    final Color textColor = Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
         ),
       ),
     );
@@ -399,30 +478,7 @@ class WorkOrderList extends StatelessWidget {
       displacement: 0,
       child: isLoading && data.isEmpty
           // 加载中：用 ListView 包一层，保证可下拉
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Lottie.asset(
-                        'assets/animations/loading_files.json',
-                        repeat: true,
-                        animate: true,
-                        width: 200,
-                        height: 200,
-                      ),
-                      const Text(
-                        '正在加载数据...',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
+          ? const Center(child: CircularProgressIndicator())
           : (data.isEmpty
                 // 空数据：同样用 ListView 包一层
                 ? ListView(

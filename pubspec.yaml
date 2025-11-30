@@ -63,6 +63,7 @@ dependencies:
   package_info_plus: ^9.0.0
   flutter_native_splash: ^2.4.7
   background_fetch: ^1.5.0
+  intl: ^0.20.2
 
 flutter_launcher_icons:
   android: true
@@ -100,6 +101,7 @@ flutter:
     - assets/animations/splash_loading.json
     - assets/animations/empty_ghost.json
     - assets/animations/loading_files.json
+    - assets/animations/loading.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
