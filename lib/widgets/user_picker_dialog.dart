@@ -114,7 +114,7 @@ void showUserPickerDialog({
                         .map(
                           (u) => Center(
                             child: Text(
-                              u.name,
+                              "${u.name} - ${u.userNumber}",
                               style: const TextStyle(fontSize: 16),
                             ),
                           ),

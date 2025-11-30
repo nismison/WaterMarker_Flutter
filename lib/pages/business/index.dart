@@ -364,7 +364,6 @@ class _IndexPageState extends State<IndexPage> {
                 title: const Text('用户编号'),
                 details: Text(provider.selectedUserNumber),
                 suffix: const Icon(FIcons.lockKeyhole, color: Colors.grey),
-                enabled: false,
                 onPress: null,
               ),
 
