@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -106,10 +107,14 @@ class _AppRootState extends State<AppRoot> {
       debugPrint("[Update] 当前已是最新版本: $currentVersion");
     }
 
-    await BackgroundFetchManager.instance.stop();
-    await BackgroundFetchManager.instance.init(
-      minimumFetchIntervalMinutes: 15, // 期望每 15 分钟触发一次
-    );
+    if (!kDebugMode) {
+      debugPrint("[BackgroundFetchManager] 开始初始化");
+      await BackgroundFetchManager.instance.stop();
+      await BackgroundFetchManager.instance.init(
+        minimumFetchIntervalMinutes: 15, // 期望每 15 分钟触发一次
+      );
+      debugPrint("[BackgroundFetchManager] 初始化完成");
+    }
 
     // 5. 异步启动图片同步
     _startScanImages();

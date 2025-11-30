@@ -112,65 +112,102 @@ class _WorkOrderCard extends StatelessWidget {
                   ),
                 ),
 
-                // 只有待处理工单才显示“关单”按钮
-                if (order.orderType == "pending_process")
-                  FButton(
-                    child: const Text("关单"),
-                    onPress: () async {
-                      showFDialog(
-                        context: context,
-                        builder: (dialogContext, style, animation) => FDialog(
-                          style: style.call,
-                          animation: animation,
-                          direction: Axis.horizontal,
-                          title: const Text('提交工单'),
-                          body: const Text('是否提交工单？'),
-                          actions: [
-                            FButton(
-                              style: FButtonStyle.outline(),
-                              onPress: () => Navigator.of(dialogContext).pop(),
-                              child: const Text('取消'),
-                            ),
-                            FButton(
-                              onPress: () async {
-                                Navigator.of(dialogContext).pop();
+                order.orderType == "pending_process"
+                    ? FButton(
+                        child: const Text("关单"),
+                        onPress: () async {
+                          showFDialog(
+                            context: context,
+                            builder: (dialogContext, style, animation) =>
+                                FDialog(
+                                  style: style.call,
+                                  animation: animation,
+                                  direction: Axis.horizontal,
+                                  title: const Text('提交工单'),
+                                  body: const Text('是否提交工单？'),
+                                  actions: [
+                                    FButton(
+                                      style: FButtonStyle.outline(),
+                                      onPress: () =>
+                                          Navigator.of(dialogContext).pop(),
+                                      child: const Text('取消'),
+                                    ),
+                                    FButton(
+                                      onPress: () async {
+                                        Navigator.of(dialogContext).pop();
 
-                                final workOrderProvider = context
-                                    .read<WorkOrderProvider>();
+                                        final workOrderProvider = context
+                                            .read<WorkOrderProvider>();
 
-                                GlobalLoading().show(context, text: '正在提交...');
+                                        GlobalLoading().show(
+                                          context,
+                                          text: '正在提交...',
+                                        );
 
-                                try {
-                                  await FmApi().completeTask(
-                                    userName: "梁振卓",
-                                    userNumber: "2409840",
-                                    orderId: order.orderId,
-                                  );
+                                        try {
+                                          await FmApi().completeTask(
+                                            userName: "梁振卓",
+                                            userNumber: "2409840",
+                                            orderId: order.orderId,
+                                          );
 
-                                  Fluttertoast.showToast(
-                                    msg: '提交工单成功',
-                                    backgroundColor: Colors.green,
-                                  );
+                                          Fluttertoast.showToast(
+                                            msg: '提交工单成功',
+                                            backgroundColor: Colors.green,
+                                          );
 
-                                  workOrderProvider.removeFromPendingProcess(
-                                    order.orderId,
-                                  );
-                                } catch (e) {
-                                  Fluttertoast.showToast(
-                                    msg: '提交工单失败：${e.toString()}',
-                                    backgroundColor: Colors.red,
-                                  );
-                                } finally {
-                                  GlobalLoading().hide();
-                                }
-                              },
-                              child: const Text('提交'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                                          workOrderProvider
+                                              .removeFromPendingProcess(
+                                                order.orderId,
+                                              );
+                                        } catch (e) {
+                                          Fluttertoast.showToast(
+                                            msg: '提交工单失败：${e.toString()}',
+                                            backgroundColor: Colors.red,
+                                          );
+                                        } finally {
+                                          GlobalLoading().hide();
+                                        }
+                                      },
+                                      child: const Text('提交'),
+                                    ),
+                                  ],
+                                ),
+                          );
+                        },
+                      )
+                    : FButton(
+                        child: const Text("接单"),
+                        onPress: () async {
+                          final workOrderProvider = context
+                              .read<WorkOrderProvider>();
+
+                          GlobalLoading().show(context, text: '正在接单...');
+
+                          try {
+                            await FmApi().acceptTask(
+                              userNumber: "2409840",
+                              orderId: order.orderId,
+                            );
+
+                            Fluttertoast.showToast(
+                              msg: '接单成功',
+                              backgroundColor: Colors.green,
+                            );
+
+                            workOrderProvider.moveFromAcceptToProcess(
+                              order.orderId,
+                            );
+                          } catch (e) {
+                            Fluttertoast.showToast(
+                              msg: '接单失败：${e.toString()}',
+                              backgroundColor: Colors.red,
+                            );
+                          } finally {
+                            GlobalLoading().hide();
+                          }
+                        },
+                      ),
               ],
             ),
           ],

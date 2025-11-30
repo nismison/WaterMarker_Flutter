@@ -139,4 +139,10 @@ class WorkOrderProvider extends ChangeNotifier {
 
   // 如果以后要做“接单”，可以在这里 add / move 列表项
   // void moveFromAcceptToProcess(String orderId) { ... }
+  void moveFromAcceptToProcess(String orderId) {
+    final order = _pendingAccept.firstWhere((o) => o.orderId == orderId);
+    _pendingAccept = _pendingAccept.where((o) => o.orderId != orderId).toList();
+    _pendingProcess.add(order);
+    notifyListeners();
+  }
 }
