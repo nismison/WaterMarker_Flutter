@@ -48,11 +48,13 @@ class MarkedPreviewPage extends StatelessWidget {
                 Fluttertoast.showToast(
                   msg: "保存成功",
                   backgroundColor: Colors.green,
+                  gravity: ToastGravity.CENTER,
                 );
               } catch (e) {
                 Fluttertoast.showToast(
                   msg: "保存失败：$e",
                   backgroundColor: Colors.red,
+                  gravity: ToastGravity.CENTER,
                 );
               } finally {
                 loading.hide();

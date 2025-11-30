@@ -154,6 +154,7 @@ class _WorkOrderCard extends StatelessWidget {
                                           Fluttertoast.showToast(
                                             msg: '提交工单成功',
                                             backgroundColor: Colors.green,
+                                            gravity: ToastGravity.CENTER,
                                           );
 
                                           workOrderProvider
@@ -164,6 +165,7 @@ class _WorkOrderCard extends StatelessWidget {
                                           Fluttertoast.showToast(
                                             msg: '提交工单失败：${e.toString()}',
                                             backgroundColor: Colors.red,
+                                            gravity: ToastGravity.CENTER,
                                           );
                                         } finally {
                                           GlobalLoading().hide();
@@ -193,6 +195,7 @@ class _WorkOrderCard extends StatelessWidget {
                             Fluttertoast.showToast(
                               msg: '接单成功',
                               backgroundColor: Colors.green,
+                              gravity: ToastGravity.CENTER,
                             );
 
                             workOrderProvider.moveFromAcceptToProcess(
@@ -202,6 +205,7 @@ class _WorkOrderCard extends StatelessWidget {
                             Fluttertoast.showToast(
                               msg: '接单失败：${e.toString()}',
                               backgroundColor: Colors.red,
+                              gravity: ToastGravity.CENTER,
                             );
                           } finally {
                             GlobalLoading().hide();
@@ -288,6 +292,7 @@ class _PendingAcceptListState extends State<PendingAcceptList>
                         Fluttertoast.showToast(
                           msg: '接单成功',
                           backgroundColor: Colors.green,
+                          gravity: ToastGravity.CENTER,
                         );
 
                         for (final order in provider.pendingAccept) {
@@ -297,6 +302,7 @@ class _PendingAcceptListState extends State<PendingAcceptList>
                         Fluttertoast.showToast(
                           msg: '接单失败：${e.toString()}',
                           backgroundColor: Colors.red,
+                          gravity: ToastGravity.CENTER,
                         );
                       } finally {
                         GlobalLoading().hide();

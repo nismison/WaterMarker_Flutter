@@ -62,6 +62,7 @@ class _IndexPageState extends State<IndexPage> {
                 Fluttertoast.showToast(
                   msg: "没有媒体权限",
                   backgroundColor: Colors.red,
+                  gravity: ToastGravity.CENTER,
                 );
                 AppPermissions.ensureGalleryPermission();
                 return;
@@ -86,6 +87,7 @@ class _IndexPageState extends State<IndexPage> {
                   Fluttertoast.showToast(
                     msg: "解密失败",
                     backgroundColor: Colors.red,
+                    gravity: ToastGravity.CENTER,
                   );
                   return;
                 }
@@ -107,17 +109,20 @@ class _IndexPageState extends State<IndexPage> {
                   Fluttertoast.showToast(
                     msg: "已添加新用户 [$name - $number]",
                     backgroundColor: Colors.green,
+                    gravity: ToastGravity.CENTER,
                   );
                 } else {
                   Fluttertoast.showToast(
                     msg: "用户已存在，无需添加",
                     backgroundColor: Colors.red,
+                    gravity: ToastGravity.CENTER,
                   );
                 }
               } else {
                 Fluttertoast.showToast(
                   msg: "未识别到二维码",
                   backgroundColor: Colors.red,
+                  gravity: ToastGravity.CENTER,
                 );
               }
             },
@@ -130,6 +135,7 @@ class _IndexPageState extends State<IndexPage> {
                 Fluttertoast.showToast(
                   msg: "没有相机权限",
                   backgroundColor: Colors.red,
+                  gravity: ToastGravity.CENTER,
                 );
                 AppPermissions.ensureCameraPermission();
                 return;
@@ -281,6 +287,7 @@ class _IndexPageState extends State<IndexPage> {
                     Fluttertoast.showToast(
                       msg: "没有媒体权限",
                       backgroundColor: Colors.red,
+                      gravity: ToastGravity.CENTER,
                     );
                     AppPermissions.ensureGalleryPermission();
                     return;
@@ -426,11 +433,11 @@ class _IndexPageState extends State<IndexPage> {
   // ----------------------------------------------------------------------
   void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
-      Fluttertoast.showToast(msg: "请先选择至少一张图片", backgroundColor: Colors.red);
+      Fluttertoast.showToast(msg: "请先选择至少一张图片", backgroundColor: Colors.red, gravity: ToastGravity.CENTER,);
       return;
     }
     if (provider.selectedUser == null) {
-      Fluttertoast.showToast(msg: "请先选择用户", backgroundColor: Colors.red);
+      Fluttertoast.showToast(msg: "请先选择用户", backgroundColor: Colors.red, gravity: ToastGravity.CENTER,);
       return;
     }
 
@@ -499,6 +506,7 @@ class _IndexPageState extends State<IndexPage> {
         Fluttertoast.showToast(
           msg: "图片拼接失败，请查看日志",
           backgroundColor: Colors.red,
+          gravity: ToastGravity.CENTER,
         );
       }
     }

@@ -242,6 +242,7 @@ class _FmCheckinView extends StatelessWidget {
                     Fluttertoast.showToast(
                       msg: "打卡成功",
                       backgroundColor: Colors.green,
+                      gravity: ToastGravity.CENTER,
                     );
 
                     vm.reload(); // 刷新数据
@@ -249,6 +250,7 @@ class _FmCheckinView extends StatelessWidget {
                     Fluttertoast.showToast(
                       msg: "打卡失败: ${e.toString()}",
                       backgroundColor: Colors.red,
+                      gravity: ToastGravity.CENTER,
                     );
                   } finally {
                     GlobalLoading().hide();
@@ -330,6 +332,7 @@ class _FmCheckinView extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: RefreshIndicator(
                       onRefresh: vm.reload,
+                      displacement: 0,
                       child: isLoading && data == null
                           ? const Center(child: CircularProgressIndicator())
                           : error != null
