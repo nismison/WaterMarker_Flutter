@@ -255,8 +255,55 @@ class _PendingAcceptListState extends State<PendingAcceptList>
           isLoading: provider.isLoadingPendingAccept,
           emptyText: '暂无待接工单',
           actionText: '一键接单',
-          onAction: () {
-            // TODO: 一键接单逻辑，建议也放到 WorkOrderProvider 里
+          onAction: () async {
+            showFDialog(
+              context: context,
+              builder: (dialogContext, style, animation) => FDialog(
+                style: style.call,
+                animation: animation,
+                direction: Axis.horizontal,
+                title: const Text('一键接单'),
+                body: const Text('是否接取所有工单？'),
+                actions: [
+                  FButton(
+                    style: FButtonStyle.outline(),
+                    onPress: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('取消'),
+                  ),
+                  FButton(
+                    child: const Text('确定'),
+                    onPress: () async {
+                      GlobalLoading().show(context, text: '正在接单...');
+
+                      try {
+                        await FmApi().acceptMultiTask(
+                          userNumber: '2409840',
+                          orderIds: provider.pendingAccept
+                              .map((order) => order.orderId)
+                              .toList(),
+                        );
+
+                        Fluttertoast.showToast(
+                          msg: '接单成功',
+                          backgroundColor: Colors.green,
+                        );
+
+                        for (final order in provider.pendingAccept) {
+                          provider.moveFromAcceptToProcess(order.orderId);
+                        }
+                      } catch (e) {
+                        Fluttertoast.showToast(
+                          msg: '接单失败：${e.toString()}',
+                          backgroundColor: Colors.red,
+                        );
+                      } finally {
+                        GlobalLoading().hide();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            );
           },
           onRefresh: provider.refreshPendingAccept,
         );
