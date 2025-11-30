@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 import 'package:watermarker_v2/pages/business/index.dart';
+import 'package:watermarker_v2/pages/business/fm_checkin_page.dart';
+import 'package:watermarker_v2/pages/business/orders.dart';
 import 'package:watermarker_v2/widgets/sliding_bottom_nav_bar.dart';
-
-import '../business/orders.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -17,8 +17,8 @@ class _HomeShellState extends State<HomeShell> {
 
   final List<Widget> _pages = const [
     IndexPage(),
+    FmCheckinPage(),
     OrdersPage(),
-    Placeholder()
   ];
 
   @override
@@ -33,12 +33,12 @@ class _HomeShellState extends State<HomeShell> {
             label: '生成水印',
           ),
           SlidingNavBarItem(
-            icon: FIcons.notepadText,
-            label: '百川工单',
+            icon: FIcons.loaderPinwheel,
+            label: '打卡',
           ),
           SlidingNavBarItem(
-            icon: FIcons.settings2,
-            label: '设置',
+            icon: FIcons.notepadText,
+            label: '百川工单',
           ),
         ],
       ),

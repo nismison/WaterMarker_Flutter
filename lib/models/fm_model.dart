@@ -414,3 +414,207 @@ class FmCompleteTaskResult {
     };
   }
 }
+
+/// FM 签到记录中的图片/文字信息。
+class FmCheckinPhoto {
+  /// 图片信息（具体结构由后端决定，可能是 URL / 数组等，这里用 dynamic 保留灵活性）
+  final dynamic images;
+
+  /// 文本备注
+  final dynamic text;
+
+  /// 原始数据，方便调试/扩展
+  final Map<String, dynamic> raw;
+
+  FmCheckinPhoto({required this.images, required this.text, required this.raw});
+
+  factory FmCheckinPhoto.fromJson(Map<String, dynamic> json) {
+    final map = Map<String, dynamic>.from(json);
+    return FmCheckinPhoto(images: map['images'], text: map['text'], raw: map);
+  }
+
+  Map<String, dynamic> toJson() => Map<String, dynamic>.from(raw);
+}
+
+/// 单条签到记录。
+class FmCheckinRecord {
+  /// 区域（数值）
+  final int? area;
+
+  /// 考勤状态（字符串，可能为空）
+  final String? attendance;
+
+  /// 地点，如 "Q南宁中国锦园"
+  final String? location;
+
+  /// 照片/文字信息
+  final FmCheckinPhoto? photo;
+
+  /// 记录 ID
+  final int? recordId;
+
+  /// 记录时间（秒级时间戳）
+  final int? recordTime;
+
+  /// 审核状态（具体值由后端决定）
+  final String? reviewStatus;
+
+  /// 原始数据
+  final Map<String, dynamic> raw;
+
+  FmCheckinRecord({
+    required this.area,
+    required this.attendance,
+    required this.location,
+    required this.photo,
+    required this.recordId,
+    required this.recordTime,
+    required this.reviewStatus,
+    required this.raw,
+  });
+
+  factory FmCheckinRecord.fromJson(Map<String, dynamic> json) {
+    final map = Map<String, dynamic>.from(json);
+    return FmCheckinRecord(
+      area: _asIntOrNull(map['area']),
+      attendance: _asStringOrNull(map['attendance']),
+      location: _asStringOrNull(map['location']),
+      photo: map['photo'] is Map<String, dynamic>
+          ? FmCheckinPhoto.fromJson(map['photo'] as Map<String, dynamic>)
+          : null,
+      recordId: _asIntOrNull(map['record_id']),
+      recordTime: _asIntOrNull(map['record_time']),
+      reviewStatus: _asStringOrNull(map['review_status']),
+      raw: map,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'area': area,
+      'attendance': attendance,
+      'location': location,
+      'photo': photo?.toJson(),
+      'record_id': recordId,
+      'record_time': recordTime,
+      'review_status': reviewStatus,
+    };
+  }
+}
+
+/// 签到排班信息。
+class FmCheckinSchedule {
+  /// 开始时间（秒级时间戳）
+  final int? startTime;
+
+  /// 结束时间（秒级时间戳）
+  final int? endTime;
+
+  /// 排班类型/名称，如 "安全C早08143"
+  final String? type;
+
+  /// 原始数据
+  final Map<String, dynamic> raw;
+
+  FmCheckinSchedule({
+    required this.startTime,
+    required this.endTime,
+    required this.type,
+    required this.raw,
+  });
+
+  factory FmCheckinSchedule.fromJson(Map<String, dynamic> json) {
+    final map = Map<String, dynamic>.from(json);
+    return FmCheckinSchedule(
+      startTime: _asIntOrNull(map['start_time']),
+      endTime: _asIntOrNull(map['end_time']),
+      type: _asStringOrNull(map['type']),
+      raw: map,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'start_time': startTime,
+      'end_time': endTime,
+      'type': type,
+    };
+  }
+}
+
+/// 签到记录接口整体结果，对应 data：
+/// {
+///   "record": [ {...}, ... ],
+///   "schedule": [ {...}, ... ]
+/// }
+class FmCheckinRecordResult {
+  final List<FmCheckinRecord> record;
+  final List<FmCheckinSchedule> schedule;
+
+  FmCheckinRecordResult({required this.record, required this.schedule});
+
+  factory FmCheckinRecordResult.fromJson(Map<String, dynamic> json) {
+    final List<FmCheckinRecord> recordList = <FmCheckinRecord>[];
+    final List<FmCheckinSchedule> scheduleList = <FmCheckinSchedule>[];
+
+    final dynamic recordRaw = json['record'];
+    if (recordRaw is List) {
+      for (final e in recordRaw) {
+        if (e is Map<String, dynamic>) {
+          recordList.add(FmCheckinRecord.fromJson(e));
+        } else if (e is Map) {
+          recordList.add(
+            FmCheckinRecord.fromJson(Map<String, dynamic>.from(e)),
+          );
+        }
+      }
+    }
+
+    final dynamic scheduleRaw = json['schedule'];
+    if (scheduleRaw is List) {
+      for (final e in scheduleRaw) {
+        if (e is Map<String, dynamic>) {
+          scheduleList.add(FmCheckinSchedule.fromJson(e));
+        } else if (e is Map) {
+          scheduleList.add(
+            FmCheckinSchedule.fromJson(Map<String, dynamic>.from(e)),
+          );
+        }
+      }
+    }
+
+    return FmCheckinRecordResult(record: recordList, schedule: scheduleList);
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'record': record.map((e) => e.toJson()).toList(),
+      'schedule': schedule.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  bool get hasRecord => record.isNotEmpty;
+}
+
+/// 签到接口返回结果。
+///
+/// 目前后端成功时返回：
+/// {
+///   "success": true,
+///   "data": null
+/// }
+///
+/// ApiClient.safeCall 会把 data=null 转换为空 Map，
+/// 因此这里先定义一个占位模型，方便以后扩展字段。
+class FmCheckinResult {
+  /// 原始 data 内容，目前为空 Map，占位用。
+  final Map<String, dynamic> raw;
+
+  FmCheckinResult({required this.raw});
+
+  factory FmCheckinResult.fromJson(Map<String, dynamic> json) {
+    return FmCheckinResult(raw: Map<String, dynamic>.from(json));
+  }
+
+  Map<String, dynamic> toJson() => Map<String, dynamic>.from(raw);
+}

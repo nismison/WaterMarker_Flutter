@@ -8,6 +8,7 @@ import 'package:watermarker_v2/api/base/http_client.dart';
 import 'package:watermarker_v2/providers/app_config_provider.dart';
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
+import 'package:watermarker_v2/providers/fm_config_provider.dart';
 import 'package:watermarker_v2/router.dart';
 import 'package:watermarker_v2/services/image_sync_service.dart';
 import 'package:watermarker_v2/utils/database_util.dart';
@@ -63,6 +64,7 @@ class _AppRootState extends State<AppRoot> {
     final appConfigProvider = context.read<AppConfigProvider>();
     final userProvider = context.read<UserProvider>();
     final imagePickerProvider = context.read<ImagePickerProvider>();
+    final fmConfig = context.read<FmConfigProvider>();
 
     // 1. 路由初始化
     _splashController.updateMessage('正在初始化路由...');
@@ -70,8 +72,8 @@ class _AppRootState extends State<AppRoot> {
 
     // 2. 设置后端 BaseUrl
     _splashController.updateMessage('正在配置网络...');
-    HttpClient.setBaseUrl('https://api.zytsy.icu');
-    // HttpClient.setBaseUrl('http://192.168.1.9:5001');
+    // HttpClient.setBaseUrl('https://api.zytsy.icu');
+    HttpClient.setBaseUrl('http://192.168.1.9:5001');
 
     // 3. 加载配置
     _splashController.updateMessage('正在加载配置...');
@@ -115,6 +117,9 @@ class _AppRootState extends State<AppRoot> {
       );
       debugPrint("[BackgroundFetchManager] 初始化完成");
     }
+
+    // 测试数据
+    fmConfig.setUserInfo(userProvider.users.first);
 
     // 5. 异步启动图片同步
     _startScanImages();

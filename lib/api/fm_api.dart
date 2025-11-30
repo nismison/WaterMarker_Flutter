@@ -191,4 +191,73 @@ class FmApi extends ApiClient {
 
     return FmCompleteTaskResult.fromJson(data);
   }
+
+  /// 获取签到记录和排班信息。
+  ///
+  /// 对应后端：POST /api/fm/checkin_record
+  ///
+  /// 请求 JSON Body：
+  /// {
+  ///   "user_number": "2409840",
+  ///   "phone": "19127224860"
+  /// }
+  ///
+  /// 响应（成功）：
+  /// {
+  ///   "success": true,
+  ///   "data": {
+  ///     "record": [ { ...FmCheckinRecord... } ],
+  ///     "schedule": [ { ...FmCheckinSchedule... } ]
+  ///   }
+  /// }
+  Future<FmCheckinRecordResult> fetchCheckinRecord({
+    required String userNumber,
+    required String phone,
+  }) async {
+    final Map<String, dynamic> data = await safeCall(() {
+      return dio.post(
+        '/api/fm/checkin_record',
+        data: <String, dynamic>{'user_number': userNumber, 'phone': phone},
+      );
+    });
+
+    return FmCheckinRecordResult.fromJson(data);
+  }
+
+  /// 执行签到。
+  ///
+  /// 对应后端：POST /api/fm/checkin
+  ///
+  /// 请求 JSON Body：
+  /// {
+  ///   "phone": "19127224860",
+  ///   "device_model": "你的设备型号",
+  ///   "device_uuid": "设备唯一标识"
+  /// }
+  ///
+  /// 成功响应：
+  /// {
+  ///   "success": true,
+  ///   "data": null
+  /// }
+  ///
+  /// 失败时会通过 AppNetworkException 抛出，error 字段为后端返回的错误信息。
+  Future<FmCheckinResult> checkin({
+    required String phone,
+    required String deviceModel,
+    required String deviceUuid,
+  }) async {
+    final Map<String, dynamic> data = await safeCall(() {
+      return dio.post(
+        '/api/fm/checkin',
+        data: <String, dynamic>{
+          'phone': phone,
+          'device_model': deviceModel,
+          'device_uuid': deviceUuid,
+        },
+      );
+    });
+
+    return FmCheckinResult.fromJson(data);
+  }
 }

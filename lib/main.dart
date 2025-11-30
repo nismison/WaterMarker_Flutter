@@ -1,6 +1,7 @@
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:watermarker_v2/providers/fm_config_provider.dart';
 
 import 'package:watermarker_v2/providers/user_provider.dart';
 import 'package:watermarker_v2/providers/work_order_provider.dart';
@@ -8,7 +9,7 @@ import 'package:watermarker_v2/providers/app_config_provider.dart';
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/pages/root/app_root.dart';
 
-import 'background/background_jobs.dart';
+import 'package:watermarker_v2/background/background_jobs.dart';
 
 /// Android headless 模式下的回调必须是顶层函数
 /// 加上 @pragma('vm:entry-point') 确保不会被 tree-shaking 干掉
@@ -56,6 +57,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => WorkOrderProvider()),
         // 用户列表 Provider
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider<FmConfigProvider>(
+          create: (_) => FmConfigProvider(),
+        ),
       ],
       child: const AppRoot(),
     ),

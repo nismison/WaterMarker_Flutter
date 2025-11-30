@@ -13,28 +13,28 @@ class OrdersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const TabBar(
-            dividerColor: Color.fromRGBO(229, 229, 229, 0.5),
-            indicatorColor: Colors.black87,
-            labelColor: Colors.black87,
-            unselectedLabelColor: Colors.grey,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            unselectedLabelStyle: TextStyle(
-              fontWeight: FontWeight.normal,
-              fontSize: 16,
-            ),
-            tabs: [
-              Tab(text: '待接工单'),
-              Tab(text: '待处理工单'),
+    return FScaffold(
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: FTabs(
+            children: [
+              FTabEntry(
+                label: const Text(
+                  '待接工单',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                child: Expanded(child: PendingAcceptList()),
+              ),
+              FTabEntry(
+                label: const Text(
+                  '待处理工单',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                child: Expanded(child: PendingProcessList()),
+              ),
             ],
           ),
-        ),
-        body: const TabBarView(
-          children: [PendingAcceptList(), PendingProcessList()],
         ),
       ),
     );
@@ -273,6 +273,8 @@ class _PendingAcceptListState extends State<PendingAcceptList>
                   FButton(
                     child: const Text('确定'),
                     onPress: () async {
+                      Navigator.of(dialogContext).pop();
+
                       GlobalLoading().show(context, text: '正在接单...');
 
                       try {
