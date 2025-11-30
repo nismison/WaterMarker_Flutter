@@ -40,7 +40,7 @@ class HttpClient {
   }
 
   /// 默认 BaseUrl（可以在 main.dart 中切换）
-  static String _baseUrl = '';
+  static String _baseUrl = 'https://api.zytsy.icu';
 
   /// 设置全局 BaseUrl
   static void setBaseUrl(String url) {

@@ -14,6 +14,7 @@ import 'package:watermarker_v2/utils/storage_util.dart';
 import 'package:watermarker_v2/utils/update_util.dart';
 import 'package:watermarker_v2/pages/root/splash_page.dart';
 import 'package:watermarker_v2/pages/root/main.dart';
+import 'package:watermarker_v2/background/background_fetch_manager.dart';
 
 /// App 根组件：
 /// 全局统一：
@@ -68,8 +69,8 @@ class _AppRootState extends State<AppRoot> {
 
     // 2. 设置后端 BaseUrl
     _splashController.updateMessage('正在配置网络...');
-    // HttpClient.setBaseUrl('https://api.zytsy.icu');
-    HttpClient.setBaseUrl('http://192.168.1.9:5001');
+    HttpClient.setBaseUrl('https://api.zytsy.icu');
+    // HttpClient.setBaseUrl('http://192.168.1.9:5001');
 
     // 3. 加载配置
     _splashController.updateMessage('正在加载配置...');
@@ -104,6 +105,11 @@ class _AppRootState extends State<AppRoot> {
     } else {
       debugPrint("[Update] 当前已是最新版本: $currentVersion");
     }
+
+    await BackgroundFetchManager.instance.stop();
+    await BackgroundFetchManager.instance.init(
+      minimumFetchIntervalMinutes: 15, // 期望每 15 分钟触发一次
+    );
 
     // 5. 异步启动图片同步
     _startScanImages();
