@@ -1,22 +1,25 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:share_handler/share_handler.dart';
 
 import 'package:watermarker_v2/api/base/http_client.dart';
+import 'package:watermarker_v2/background/background_fetch_manager.dart';
+import 'package:watermarker_v2/pages/root/main.dart';
+import 'package:watermarker_v2/pages/root/splash_page.dart';
 import 'package:watermarker_v2/providers/app_config_provider.dart';
+import 'package:watermarker_v2/providers/fm_config_provider.dart';
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
-import 'package:watermarker_v2/providers/fm_config_provider.dart';
 import 'package:watermarker_v2/router.dart';
+import 'package:watermarker_v2/services/image_share_service.dart';
 import 'package:watermarker_v2/services/image_sync_service.dart';
 import 'package:watermarker_v2/utils/database_util.dart';
 import 'package:watermarker_v2/utils/storage_util.dart';
 import 'package:watermarker_v2/utils/update_util.dart';
-import 'package:watermarker_v2/pages/root/splash_page.dart';
-import 'package:watermarker_v2/pages/root/main.dart';
-import 'package:watermarker_v2/background/background_fetch_manager.dart';
 
 /// App 根组件：
 /// 全局统一：
@@ -34,6 +37,11 @@ class AppRoot extends StatefulWidget {
 class _AppRootState extends State<AppRoot> {
   late final Future<void> _initFuture;
   late final SplashController _splashController;
+
+  // 图片分享服务
+  final ImageShareService _imageShareService = ImageShareService();
+  final ShareHandlerPlatform _shareHandler = ShareHandlerPlatform.instance;
+  StreamSubscription<SharedMedia>? _subscription;
 
   @override
   void initState() {
@@ -66,20 +74,20 @@ class _AppRootState extends State<AppRoot> {
     final imagePickerProvider = context.read<ImagePickerProvider>();
     final fmConfig = context.read<FmConfigProvider>();
 
-    // 1. 路由初始化
+    // 路由初始化（仍然保留，供全局 Fluro 使用）
     _splashController.updateMessage('正在初始化路由...');
     AppRouter.setupRouter();
 
-    // 2. 设置后端 BaseUrl
+    // 设置后端 BaseUrl
     _splashController.updateMessage('正在配置网络...');
     HttpClient.setBaseUrl('https://api.zytsy.icu');
     // HttpClient.setBaseUrl('http://192.168.1.9:5001');
 
-    // 3. 加载配置
+    // 加载配置
     _splashController.updateMessage('正在加载配置...');
     await _loadAppConfig(appConfigProvider);
 
-    // 4. 用户列表
+    // 用户列表
     _splashController.updateMessage('正在加载用户列表...');
     await userProvider.fetchUserList();
     imagePickerProvider.updateUser(userProvider.users.first);
@@ -121,7 +129,10 @@ class _AppRootState extends State<AppRoot> {
     // 测试数据
     fmConfig.setUserInfo(userProvider.users.first);
 
-    // 5. 异步启动图片同步
+    // 初始化图片分享服务
+    _initShareHandler();
+
+    // 异步启动图片同步
     _startScanImages();
   }
 
@@ -150,8 +161,66 @@ class _AppRootState extends State<AppRoot> {
     await prodService.syncAllImages(appConfig);
   }
 
+  Future<void> _initShareHandler() async {
+    debugPrint('[AppRoot] initPlatformState start');
+
+    // 1. 冷启动：通过“分享”启动 App 的场景
+    SharedMedia? initialMedia;
+    try {
+      initialMedia = await _shareHandler.getInitialSharedMedia();
+      debugPrint('[AppRoot] getInitialSharedMedia -> $initialMedia');
+    } catch (e, stack) {
+      debugPrint('[AppRoot] getInitialSharedMedia error: $e\n$stack');
+    }
+
+    if (initialMedia != null && mounted) {
+      debugPrint('[AppRoot] handling initial media...');
+      // 冷启动时用 addPostFrameCallback，确保 Provider 树已经挂好
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _handleSharedMedia(initialMedia!);
+      });
+    }
+
+    // 2. App 已在前台/后台，再通过分享唤醒
+    _subscription = _shareHandler.sharedMediaStream.listen(
+      (SharedMedia media) async {
+        debugPrint('[AppRoot] sharedMediaStream event: $media');
+        if (!mounted) return;
+        await _handleSharedMedia(media);
+      },
+      onError: (Object error, StackTrace stack) {
+        debugPrint('[AppRoot] sharedMediaStream error: $error\n$stack');
+      },
+    );
+
+    debugPrint('[AppRoot] initPlatformState done');
+  }
+
+  /// 这里只做一件事：把分享过来的路径写到 ImagePickerProvider 里，不做导航。
+  Future<void> _handleSharedMedia(SharedMedia media) async {
+    final paths = _imageShareService.extractPaths(media);
+    debugPrint('[AppRoot] _handleSharedMedia paths: $paths');
+
+    if (paths.isEmpty) {
+      return;
+    }
+
+    try {
+      final imagePicker = context.read<ImagePickerProvider>();
+      imagePicker.setSelected(paths);
+      debugPrint('[AppRoot] ImagePickerProvider.setSelected called');
+    } catch (e, stack) {
+      debugPrint('[AppRoot] setSelected error: $e\n$stack');
+    }
+
+    // 导航留给已有的 Fluro / IndexPage 体系去处理，
+    // 避免在这里和 Fluro / Forui 的 Navigator 交叉导致各种奇怪问题。
+  }
+
   @override
   void dispose() {
+    _subscription?.cancel();
     _splashController.dispose();
     super.dispose();
   }

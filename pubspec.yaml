@@ -64,6 +64,7 @@ dependencies:
   flutter_native_splash: ^2.4.7
   background_fetch: ^1.5.0
   intl: ^0.20.2
+  share_handler: ^0.0.25
 
 flutter_launcher_icons:
   android: true
