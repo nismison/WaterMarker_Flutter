@@ -1,29 +1,21 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
-import 'package:qr_code_tools/qr_code_tools.dart';
-
-import 'package:watermarker_v2/pages/utils/qr_scan_page.dart';
 import 'package:watermarker_v2/pages/business/marked_preview.dart';
-
+import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
 import 'package:watermarker_v2/providers/image_picker_provider.dart';
 import 'package:watermarker_v2/providers/user_provider.dart';
-import 'package:watermarker_v2/utils/image_picker_helper.dart';
 import 'package:watermarker_v2/utils/loading_manager.dart';
-import 'package:watermarker_v2/utils/storage_permission_util.dart';
-import 'package:watermarker_v2/utils/watermark/encryption.dart';
+import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
 import 'package:watermarker_v2/utils/watermark/watermark_generator.dart';
 import 'package:watermarker_v2/widgets/date_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
-import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
-import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class IndexPage extends StatefulWidget {
@@ -37,15 +29,6 @@ class _IndexPageState extends State<IndexPage> {
   @override
   void initState() {
     super.initState();
-  }
-
-  // ----------------------------------------------------------------------
-  // QR 扫码（原逻辑不变）
-  // ----------------------------------------------------------------------
-  Future<void> _scanWithCamera() async {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const QRScanPage()));
   }
 
   /// 使用 map + Future.wait 把 List<`AssetEntity`> 转为 List<`String`>（文件路径列表）
@@ -154,16 +137,20 @@ class _IndexPageState extends State<IndexPage> {
                     final List<AssetEntity>? result =
                         await AssetPicker.pickAssets(
                           context,
-                          pickerConfig: const AssetPickerConfig(
+                          pickerConfig: AssetPickerConfig(
                             requestType: RequestType.image,
+                            enableLivePhoto: false,
+                            selectedAssets: provider.pickedAssets,
                           ),
                         );
 
+                    if (result == null) return;
+
                     // 把 List<AssetEntity>? 转成 List<String>（每个文件的 path）
                     final List<String> paths = await _assetEntitiesToPaths(
-                      result ?? [],
+                      result,
                     );
-                    provider.setSelected(paths);
+                    provider.setSelected(paths, assets: result);
                   },
                   child: Container(
                     decoration: BoxDecoration(

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 import 'package:watermarker_v2/models/user_info_model.dart';
 
 /// @description 管理全局图片选择与统一时间、日期
 class ImagePickerProvider extends ChangeNotifier {
   final List<XFile> _pickedImages = [];
+  final List<AssetEntity> _pickedAssets = [];
   final int maxImages = 9;
 
   DateTime selectedDate = DateTime.now();
@@ -19,7 +21,7 @@ class ImagePickerProvider extends ChangeNotifier {
 
   List<XFile> get pickedImages => List.unmodifiable(_pickedImages);
 
-  List<String> get pickedPaths => _pickedImages.map((e) => e.path).toList();
+  List<AssetEntity> get pickedAssets => List.unmodifiable(_pickedAssets);
 
   bool get canAddMore => _pickedImages.length < maxImages;
 
@@ -43,7 +45,7 @@ class ImagePickerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSelected(List<String> paths) {
+  void setSelected(List<String> paths, {List<AssetEntity>? assets = const []}) {
     // 去重
     final unique = paths.toSet().toList();
 
@@ -54,6 +56,12 @@ class ImagePickerProvider extends ChangeNotifier {
     _pickedImages
       ..clear()
       ..addAll(limit.map((p) => XFile(p)));
+
+    if (assets != null && assets.isNotEmpty) {
+      _pickedAssets
+        ..clear()
+        ..addAll(assets);
+    }
 
     if (_pickedImages.length <= 1) {
       autoMerge = false;
