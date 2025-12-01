@@ -65,6 +65,7 @@ dependencies:
   background_fetch: ^1.5.0
   intl: ^0.20.2
   share_handler: ^0.0.25
+  wechat_assets_picker: ^10.0.0
 
 flutter_launcher_icons:
   android: true

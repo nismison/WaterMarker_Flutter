@@ -252,7 +252,10 @@ class _WorkOrderCard extends StatelessWidget {
                                 ),
                           );
                         },
-                        child: const Text("关单", style: TextStyle(fontSize: 13)),
+                        child: const Text(
+                          "关单",
+                          style: TextStyle(fontSize: 13, height: 1),
+                        ),
                       )
                     : FButton(
                         style: context.theme.buttonStyles.primary

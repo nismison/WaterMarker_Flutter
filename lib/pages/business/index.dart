@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:forui/forui.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_tools/qr_code_tools.dart';
 
@@ -23,6 +24,7 @@ import 'package:watermarker_v2/widgets/time_picker_dialog.dart';
 import 'package:watermarker_v2/widgets/user_picker_dialog.dart';
 import 'package:watermarker_v2/utils/watermark/image_merge_util.dart';
 import 'package:watermarker_v2/pages/utils/image_preview_page.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class IndexPage extends StatefulWidget {
   const IndexPage({super.key});
@@ -46,114 +48,24 @@ class _IndexPageState extends State<IndexPage> {
     ).push(MaterialPageRoute(builder: (_) => const QRScanPage()));
   }
 
-  void _showScanOptions() {
-    showFSheet(
-      context: context,
-      side: FLayout.btt,
-      builder: (_) => FTileGroup(
-        children: [
-          FTile(
-            prefix: Icon(FIcons.image),
-            title: const Text('从相册识别二维码'),
-            onPress: () async {
-              Navigator.pop(context);
-              // 必须检查媒体权限
-              if (!(await AppPermissions.hasGalleryPermission())) {
-                Fluttertoast.showToast(
-                  msg: "没有媒体权限",
-                  backgroundColor: Colors.red,
-                  gravity: ToastGravity.CENTER,
-                );
-                AppPermissions.ensureGalleryPermission();
-                return;
-              }
+  /// 使用 map + Future.wait 把 List<`AssetEntity`> 转为 List<`String`>（文件路径列表）
+  /// 会自动过滤掉拿不到本地文件的资源（返回 null 的）
+  Future<List<String>> _assetEntitiesToPaths(List<AssetEntity> assets) async {
+    final futures = assets.map((asset) async {
+      // 优先用压缩后的 file，拿不到再试原图
+      final File? file = await asset.file ?? await asset.originFile;
+      return file?.path; // 可能为 null
+    }).toList();
 
-              if (!mounted) return;
+    // 等待所有 Future 完成，得到 List<String?>
+    final List<String?> pathsOrNull = await Future.wait(futures);
 
-              final selectedPaths = await showImagePicker(
-                context,
-                maxSelection: 1,
-              );
-              if (selectedPaths == null || selectedPaths.isEmpty) return;
-
-              final path = selectedPaths[0];
-              final result = await QrCodeToolsPlugin.decodeFrom(path);
-
-              if (!mounted) return;
-
-              if (result != null && result.trim().isNotEmpty) {
-                final decrypted = decryptWatermark(jsonDecode(result)['text']);
-                if (decrypted == null) {
-                  Fluttertoast.showToast(
-                    msg: "解密失败",
-                    backgroundColor: Colors.red,
-                    gravity: ToastGravity.CENTER,
-                  );
-                  return;
-                }
-
-                final name = decrypted["n"];
-                final number = decrypted["s"];
-
-                final userProvider = context.read<UserProvider>();
-
-                final exists = userProvider.users.any(
-                  (item) => item.userNumber == number.toString(),
-                );
-
-                if (!exists) {
-                  await userProvider.addUser(
-                    name: name,
-                    userNumber: number.toString(),
-                  );
-                  Fluttertoast.showToast(
-                    msg: "已添加新用户 [$name - $number]",
-                    backgroundColor: Colors.green,
-                    gravity: ToastGravity.CENTER,
-                  );
-                } else {
-                  Fluttertoast.showToast(
-                    msg: "用户已存在，无需添加",
-                    backgroundColor: Colors.red,
-                    gravity: ToastGravity.CENTER,
-                  );
-                }
-              } else {
-                Fluttertoast.showToast(
-                  msg: "未识别到二维码",
-                  backgroundColor: Colors.red,
-                  gravity: ToastGravity.CENTER,
-                );
-              }
-            },
-          ),
-          FTile(
-            prefix: Icon(FIcons.camera),
-            title: const Text('打开相机扫描二维码'),
-            onPress: () async {
-              if (!await AppPermissions.hasCameraPermission()) {
-                Fluttertoast.showToast(
-                  msg: "没有相机权限",
-                  backgroundColor: Colors.red,
-                  gravity: ToastGravity.CENTER,
-                );
-                AppPermissions.ensureCameraPermission();
-                return;
-              }
-
-              if (!mounted) return;
-
-              Navigator.pop(context);
-              _scanWithCamera();
-            },
-          ),
-        ],
-      ),
-    );
+    // 过滤掉 null，只保留真实可用的路径
+    return pathsOrNull.whereType<String>().toList();
   }
 
   // ----------------------------------------------------------------------
-  // UI 主体（大部分代码保持不变）
+  // UI 主体
   // ----------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -165,50 +77,6 @@ class _IndexPageState extends State<IndexPage> {
         "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
     return FScaffold(
-      // header: FHeader.nested(
-      //   title: const Row(children: [Text('水印生成器2.0')]),
-      //   suffixes: [
-      //     // 清空按钮不变
-      //     if (provider.pickedImages.isNotEmpty)
-      //       FHeaderAction(
-      //         icon: const Icon(FIcons.trash2),
-      //         onPress: () async {
-      //           showFDialog(
-      //             context: context,
-      //             builder: (context, style, animation) => FDialog(
-      //               style: style.call,
-      //               animation: animation,
-      //               direction: Axis.horizontal,
-      //               title: const Text('清空图片'),
-      //               body: const Text('是否清空已选图片？'),
-      //               actions: [
-      //                 FButton(
-      //                   style: FButtonStyle.outline(),
-      //                   onPress: () => Navigator.of(context).pop(),
-      //                   child: const Text('取消'),
-      //                 ),
-      //                 FButton(
-      //                   onPress: () {
-      //                     Navigator.of(context).pop();
-      //                     provider.setSelected([]);
-      //                   },
-      //                   child: const Text('清空'),
-      //                 ),
-      //               ],
-      //             ),
-      //           );
-      //         },
-      //       ),
-      //
-      //     // 扫码按钮
-      //     FHeaderAction(
-      //       icon: const Icon(FIcons.scanQrCode),
-      //       onPress: () async {
-      //         _showScanOptions();
-      //       },
-      //     ),
-      //   ],
-      // ),
       child: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -283,25 +151,19 @@ class _IndexPageState extends State<IndexPage> {
                 // 添加图片按钮
                 return GestureDetector(
                   onTap: () async {
-                    if (!(await AppPermissions.hasGalleryPermission())) {
-                      Fluttertoast.showToast(
-                        msg: "没有媒体权限",
-                        backgroundColor: Colors.red,
-                        gravity: ToastGravity.CENTER,
-                      );
-                      AppPermissions.ensureGalleryPermission();
-                      return;
-                    }
+                    final List<AssetEntity>? result =
+                        await AssetPicker.pickAssets(
+                          context,
+                          pickerConfig: const AssetPickerConfig(
+                            requestType: RequestType.image,
+                          ),
+                        );
 
-                    final provider = context.read<ImagePickerProvider>();
-                    final selectedPaths = await showImagePicker(
-                      context,
-                      maxSelection: provider.maxImages,
-                      preSelectedPaths: provider.pickedPaths,
+                    // 把 List<AssetEntity>? 转成 List<String>（每个文件的 path）
+                    final List<String> paths = await _assetEntitiesToPaths(
+                      result ?? [],
                     );
-
-                    if (selectedPaths == null) return;
-                    provider.setSelected(selectedPaths);
+                    provider.setSelected(paths);
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -431,10 +293,11 @@ class _IndexPageState extends State<IndexPage> {
                   )
                   .call,
               onPress: () => _handleGenerate(provider),
-              child: const Text('生成水印'),
+              child: const Text(
+                '生成水印',
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1),
+              ),
             ),
-
-            const SizedBox(height: 40),
           ],
         ),
       ),

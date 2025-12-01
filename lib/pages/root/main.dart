@@ -88,7 +88,16 @@ class MainPage extends StatelessWidget {
 
     return MaterialApp(
       title: '水印生成器2.0',
-      theme: theme.toApproximateMaterialTheme(),
+      theme: theme.toApproximateMaterialTheme().copyWith(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark, // Android 深色图标
+          ),
+        ),
+      ),
       builder: (_, child) => FAnimatedTheme(data: theme, child: child!),
       onGenerateRoute: AppRouter.router.generator,
       initialRoute: '/',
