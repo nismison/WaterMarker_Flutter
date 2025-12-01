@@ -165,264 +165,278 @@ class _IndexPageState extends State<IndexPage> {
         "${provider.selectedTime.hour.toString().padLeft(2, '0')}:${provider.selectedTime.minute.toString().padLeft(2, '0')}";
 
     return FScaffold(
-      header: FHeader.nested(
-        title: const Row(children: [Text('水印生成器2.0')]),
-        suffixes: [
-          // 清空按钮不变
-          if (provider.pickedImages.isNotEmpty)
-            FHeaderAction(
-              icon: const Icon(FIcons.trash2),
-              onPress: () async {
-                showFDialog(
-                  context: context,
-                  builder: (context, style, animation) => FDialog(
-                    style: style.call,
-                    animation: animation,
-                    direction: Axis.horizontal,
-                    title: const Text('清空图片'),
-                    body: const Text('是否清空已选图片？'),
-                    actions: [
-                      FButton(
-                        style: FButtonStyle.outline(),
-                        onPress: () => Navigator.of(context).pop(),
-                        child: const Text('取消'),
+      // header: FHeader.nested(
+      //   title: const Row(children: [Text('水印生成器2.0')]),
+      //   suffixes: [
+      //     // 清空按钮不变
+      //     if (provider.pickedImages.isNotEmpty)
+      //       FHeaderAction(
+      //         icon: const Icon(FIcons.trash2),
+      //         onPress: () async {
+      //           showFDialog(
+      //             context: context,
+      //             builder: (context, style, animation) => FDialog(
+      //               style: style.call,
+      //               animation: animation,
+      //               direction: Axis.horizontal,
+      //               title: const Text('清空图片'),
+      //               body: const Text('是否清空已选图片？'),
+      //               actions: [
+      //                 FButton(
+      //                   style: FButtonStyle.outline(),
+      //                   onPress: () => Navigator.of(context).pop(),
+      //                   child: const Text('取消'),
+      //                 ),
+      //                 FButton(
+      //                   onPress: () {
+      //                     Navigator.of(context).pop();
+      //                     provider.setSelected([]);
+      //                   },
+      //                   child: const Text('清空'),
+      //                 ),
+      //               ],
+      //             ),
+      //           );
+      //         },
+      //       ),
+      //
+      //     // 扫码按钮
+      //     FHeaderAction(
+      //       icon: const Icon(FIcons.scanQrCode),
+      //       onPress: () async {
+      //         _showScanOptions();
+      //       },
+      //     ),
+      //   ],
+      // ),
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            // -------------------------------------------------------------------
+            // 图片 grid
+            // -------------------------------------------------------------------
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount:
+                  provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (_, index) {
+                // 已选图片（原逻辑不动）
+                if (index < provider.pickedImages.length) {
+                  final img = provider.pickedImages[index];
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: GestureDetector(
+                            child: Hero(
+                              tag: "index_page_${img.path}",
+                              child: Image.file(
+                                File(img.path),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            onTap: () {
+                              showImagePreview(
+                                context,
+                                imagePath: img.path,
+                                useHero: true,
+                                tagPrefix: "index_page",
+                                fadeDuration: Duration(milliseconds: 150),
+                                imageList: provider.pickedImages
+                                    .map((e) => e.path)
+                                    .toList(),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                      FButton(
-                        onPress: () {
-                          Navigator.of(context).pop();
-                          provider.setSelected([]);
-                        },
-                        child: const Text('清空'),
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: GestureDetector(
+                          onTap: () => provider.removeImage(index),
+                          child: const CircleAvatar(
+                            radius: 10,
+                            backgroundColor: Colors.black54,
+                            child: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
+                  );
+                }
+
+                // 添加图片按钮
+                return GestureDetector(
+                  onTap: () async {
+                    if (!(await AppPermissions.hasGalleryPermission())) {
+                      Fluttertoast.showToast(
+                        msg: "没有媒体权限",
+                        backgroundColor: Colors.red,
+                        gravity: ToastGravity.CENTER,
+                      );
+                      AppPermissions.ensureGalleryPermission();
+                      return;
+                    }
+
+                    final provider = context.read<ImagePickerProvider>();
+                    final selectedPaths = await showImagePicker(
+                      context,
+                      maxSelection: provider.maxImages,
+                      preSelectedPaths: provider.pickedPaths,
+                    );
+
+                    if (selectedPaths == null) return;
+                    provider.setSelected(selectedPaths);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.add, size: 40, color: Colors.grey),
+                    ),
                   ),
                 );
               },
             ),
 
-          // 扫码按钮
-          FHeaderAction(
-            icon: const Icon(FIcons.scanQrCode),
-            onPress: () async {
-              _showScanOptions();
-            },
-          ),
-        ],
-      ),
+            const SizedBox(height: 20),
 
-      child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 0),
-        children: [
-          // -------------------------------------------------------------------
-          // 图片 grid
-          // -------------------------------------------------------------------
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount:
-                provider.pickedImages.length + (provider.canAddMore ? 1 : 0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1,
-            ),
-            itemBuilder: (_, index) {
-              // 已选图片（原逻辑不动）
-              if (index < provider.pickedImages.length) {
-                final img = provider.pickedImages[index];
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: GestureDetector(
-                          child: Hero(
-                            tag: "index_page_${img.path}",
-                            child: Image.file(
-                              File(img.path),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          onTap: () {
-                            showImagePreview(
-                              context,
-                              imagePath: img.path,
-                              useHero: true,
-                              tagPrefix: "index_page",
-                              fadeDuration: Duration(milliseconds: 150),
-                              imageList: provider.pickedImages
-                                  .map((e) => e.path)
-                                  .toList(),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: GestureDetector(
-                        onTap: () => provider.removeImage(index),
-                        child: const CircleAvatar(
-                          radius: 10,
-                          backgroundColor: Colors.black54,
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              // 添加图片按钮
-              return GestureDetector(
-                onTap: () async {
-                  if (!(await AppPermissions.hasGalleryPermission())) {
-                    Fluttertoast.showToast(
-                      msg: "没有媒体权限",
-                      backgroundColor: Colors.red,
-                      gravity: ToastGravity.CENTER,
-                    );
-                    AppPermissions.ensureGalleryPermission();
-                    return;
-                  }
-
-                  final provider = context.read<ImagePickerProvider>();
-                  final selectedPaths = await showImagePicker(
-                    context,
-                    maxSelection: provider.maxImages,
-                    preSelectedPaths: provider.pickedPaths,
-                  );
-
-                  if (selectedPaths == null) return;
-                  provider.setSelected(selectedPaths);
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.add, size: 40, color: Colors.grey),
-                  ),
-                ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 20),
-
-          // -------------------------------------------------------------------
-          // 下面表单项不变
-          // -------------------------------------------------------------------
-          FTileGroup(
-            divider: FItemDivider.full,
-            children: [
-              FTile(
-                prefix: const Icon(FIcons.calendarDays, size: 22),
-                title: const Text('水印日期'),
-                details: Text(dateText),
-                suffix: const Icon(FIcons.chevronRight),
-                onPress: () => showDatePickerDialog(
-                  context: context,
-                  initialDate: provider.selectedDate,
-                  onSelected: provider.updateDate,
-                ),
-              ),
-              FTile(
-                prefix: const Icon(FIcons.calendarClock, size: 22),
-                title: const Text('水印时间'),
-                details: Text(timeText),
-                suffix: const Icon(FIcons.chevronRight),
-                onPress: () => showTimePickerDialog(
-                  context: context,
-                  initialTime: provider.selectedTime,
-                  onSelected: provider.updateTime,
-                ),
-              ),
-              FTile(
-                prefix: const Icon(FIcons.userPen, size: 22),
-                title: const Text('姓名'),
-                details: Text(provider.selectedUserName),
-                suffix: const Icon(FIcons.chevronRight),
-                onPress: () => showUserPickerDialog(
-                  context: context,
-                  userList: context.read<UserProvider>().users,
-                  initialName: provider.selectedUserName,
-                  onSelected: provider.updateUser,
-                ),
-              ),
-
-              FTile(
-                prefix: const Icon(FIcons.hash),
-                title: const Text('用户编号'),
-                details: Text(provider.selectedUserNumber),
-                suffix: const Icon(FIcons.lockKeyhole, color: Colors.grey),
-                onPress: null,
-              ),
-
-              if (provider.pickedImages.length > 1) FTile(
-                prefix: const Icon(FIcons.grid3x3, size: 22),
-                title: const Text('自动拼接'),
-                details: Text(provider.autoMerge ? "已启用" : "已禁用"),
-                suffix: provider.autoMerge
-                    ? const Icon(
-                        FIcons.squareCheck,
-                        color: Colors.green,
-                        size: 26,
-                      )
-                    : const Icon(FIcons.square, color: Colors.grey, size: 26),
-                onPress: () {
-                  provider.autoMerge = !provider.autoMerge;
-                  provider.randomize = false;
-                },
-              ),
-
-              if (provider.autoMerge)
+            // -------------------------------------------------------------------
+            // 下面表单项不变
+            // -------------------------------------------------------------------
+            FTileGroup(
+              divider: FItemDivider.full,
+              children: [
                 FTile(
-                  prefix: const Icon(FIcons.dices, size: 22),
-                  title: const Text('随机打乱顺序'),
-                  details: Text(provider.randomize ? "已启用" : "已禁用"),
-                  suffix: provider.randomize
-                      ? const Icon(
-                          FIcons.squareCheck,
-                          color: Colors.green,
-                          size: 26,
-                        )
-                      : const Icon(FIcons.square, color: Colors.grey, size: 26),
-                  onPress: () => provider.randomize = !provider.randomize,
+                  prefix: const Icon(FIcons.calendarDays, size: 22),
+                  title: const Text('水印日期'),
+                  details: Text(dateText),
+                  suffix: const Icon(FIcons.chevronRight),
+                  onPress: () => showDatePickerDialog(
+                    context: context,
+                    initialDate: provider.selectedDate,
+                    onSelected: provider.updateDate,
+                  ),
                 ),
-            ],
-          ),
+                FTile(
+                  prefix: const Icon(FIcons.calendarClock, size: 22),
+                  title: const Text('水印时间'),
+                  details: Text(timeText),
+                  suffix: const Icon(FIcons.chevronRight),
+                  onPress: () => showTimePickerDialog(
+                    context: context,
+                    initialTime: provider.selectedTime,
+                    onSelected: provider.updateTime,
+                  ),
+                ),
+                FTile(
+                  prefix: const Icon(FIcons.userPen, size: 22),
+                  title: const Text('姓名'),
+                  details: Text(provider.selectedUserName),
+                  suffix: const Icon(FIcons.chevronRight),
+                  onPress: () => showUserPickerDialog(
+                    context: context,
+                    userList: context.read<UserProvider>().users,
+                    initialName: provider.selectedUserName,
+                    onSelected: provider.updateUser,
+                  ),
+                ),
 
-          const SizedBox(height: 30),
+                FTile(
+                  prefix: const Icon(FIcons.hash),
+                  title: const Text('用户编号'),
+                  details: Text(provider.selectedUserNumber),
+                  suffix: const Icon(FIcons.lockKeyhole, color: Colors.grey),
+                  onPress: null,
+                ),
 
-          // 生成按钮
-          FButton(
-            style: context.theme.buttonStyles.primary
-                .copyWith(
-                  contentStyle: context.theme.buttonStyles.primary.contentStyle
-                      .copyWith(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 20,
-                          horizontal: 15,
-                        ),
-                      )
-                      .call,
-                )
-                .call,
-            onPress: () => _handleGenerate(provider),
-            child: const Text('生成水印'),
-          ),
+                if (provider.pickedImages.length > 1)
+                  FTile(
+                    prefix: const Icon(FIcons.grid3x3, size: 22),
+                    title: const Text('自动拼接'),
+                    details: Text(provider.autoMerge ? "已启用" : "已禁用"),
+                    suffix: provider.autoMerge
+                        ? const Icon(
+                            FIcons.squareCheck,
+                            color: Colors.green,
+                            size: 26,
+                          )
+                        : const Icon(
+                            FIcons.square,
+                            color: Colors.grey,
+                            size: 26,
+                          ),
+                    onPress: () {
+                      provider.autoMerge = !provider.autoMerge;
+                      provider.randomize = false;
+                    },
+                  ),
 
-          const SizedBox(height: 40),
-        ],
+                if (provider.autoMerge)
+                  FTile(
+                    prefix: const Icon(FIcons.dices, size: 22),
+                    title: const Text('随机打乱顺序'),
+                    details: Text(provider.randomize ? "已启用" : "已禁用"),
+                    suffix: provider.randomize
+                        ? const Icon(
+                            FIcons.squareCheck,
+                            color: Colors.green,
+                            size: 26,
+                          )
+                        : const Icon(
+                            FIcons.square,
+                            color: Colors.grey,
+                            size: 26,
+                          ),
+                    onPress: () => provider.randomize = !provider.randomize,
+                  ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            // 生成按钮
+            FButton(
+              style: context.theme.buttonStyles.primary
+                  .copyWith(
+                    contentStyle: context
+                        .theme
+                        .buttonStyles
+                        .primary
+                        .contentStyle
+                        .copyWith(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 15,
+                          ),
+                        )
+                        .call,
+                  )
+                  .call,
+              onPress: () => _handleGenerate(provider),
+              child: const Text('生成水印'),
+            ),
+
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
@@ -432,11 +446,19 @@ class _IndexPageState extends State<IndexPage> {
   // ----------------------------------------------------------------------
   void _handleGenerate(ImagePickerProvider provider) async {
     if (provider.pickedImages.isEmpty) {
-      Fluttertoast.showToast(msg: "请先选择至少一张图片", backgroundColor: Colors.red, gravity: ToastGravity.CENTER,);
+      Fluttertoast.showToast(
+        msg: "请先选择至少一张图片",
+        backgroundColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+      );
       return;
     }
     if (provider.selectedUser == null) {
-      Fluttertoast.showToast(msg: "请先选择用户", backgroundColor: Colors.red, gravity: ToastGravity.CENTER,);
+      Fluttertoast.showToast(
+        msg: "请先选择用户",
+        backgroundColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+      );
       return;
     }
 

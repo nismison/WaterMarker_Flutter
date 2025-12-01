@@ -79,10 +79,10 @@ class _WorkOrderCard extends StatelessWidget {
             Row(
               children: [
                 calcTimeoutDiff(order.timeout).inHours < 2
-                    ? _buildStatusPill("即将超时", Colors.red)
+                    ? buildStatusPill("即将超时", Colors.red)
                     : calcTimeoutDiff(order.timeout).inHours < 24
-                    ? _buildStatusPill("今日超时", Colors.orange)
-                    : _buildStatusPill("无超时风险", Colors.green),
+                    ? buildStatusPill("今日超时", Colors.orange)
+                    : buildStatusPill("无超时风险", Colors.green),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -313,23 +313,26 @@ class _WorkOrderCard extends StatelessWidget {
   }
 
   /// 状态胶囊：待接单 / 待处理
-  Widget _buildStatusPill(String text, Color bgColor) {
-    final Color textColor = Colors.white;
-
+  Widget buildStatusPill(String text, Color bgColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 12,
+          height: 1.0,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        textHeightBehavior: const TextHeightBehavior(
+          applyHeightToFirstAscent: false,
+          applyHeightToLastDescent: false,
         ),
       ),
     );
@@ -555,9 +558,7 @@ class WorkOrderList extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: FButton(
                           style: context.theme.buttonStyles.primary
                               .copyWith(
@@ -578,7 +579,10 @@ class WorkOrderList extends StatelessWidget {
                           onPress: onAction,
                           child: Text(
                             actionText,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
                           ),
                         ),
                       ),

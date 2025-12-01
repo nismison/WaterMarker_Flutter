@@ -304,6 +304,7 @@ class _FmCheckinView extends StatelessWidget {
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
+                          height: 1,
                         ),
                       ),
                     ),
