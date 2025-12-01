@@ -6,9 +6,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:watermarker_v2/utils/watermark/watermark_painter.dart';
 
 import 'encryption.dart';
-import 'watermark_painter.dart';
 
 /// 为单张图片生成水印（右下角二维码 + 左下文字）
 ///

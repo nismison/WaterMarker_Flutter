@@ -134,7 +134,7 @@ Future<void> _drawTextOverlay({
   // 颜色
   final ui.Color textColor = Colors.white;
   final ui.Paint panelPaint = ui.Paint()
-    ..color = ui.Color.fromRGBO(0, 0, 0, 0.3);
+    ..color = ui.Color.fromRGBO(0, 0, 0, 0.35);
 
   // ------------- 第一行背景（时间 + 姓名 + 日期）-------------
   const double firstX = 27;
