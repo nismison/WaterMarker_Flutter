@@ -2,6 +2,7 @@ import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:watermarker_v2/providers/fm_config_provider.dart';
+import 'package:flutter/services.dart';
 
 import 'package:watermarker_v2/providers/user_provider.dart';
 import 'package:watermarker_v2/providers/work_order_provider.dart';
@@ -40,6 +41,18 @@ Future<void> main() async {
 
   // 注册 Android headless 任务回调
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+
+  // 配置 Android 状态栏
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+
+      // 底部导航栏背景色：用你 App 的浅色背景
+      systemNavigationBarColor: Color(0xFFF3F4F6),
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   // 挂载 Provider，真正的初始化逻辑在 AppRoot 中统一管理
   runApp(

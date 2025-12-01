@@ -462,6 +462,9 @@ class FmCheckinViewModel extends ChangeNotifier {
   bool _isButtonPressed = false;
   bool _isButtonHover = false;
 
+  /// 标记 ChangeNotifier 是否已被 dispose
+  bool _disposed = false;
+
   FmCheckinRecordResult? get data => _data;
 
   bool get isLoading => _isLoading;
@@ -499,7 +502,9 @@ class FmCheckinViewModel extends ChangeNotifier {
   Future<void> _loadData() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
 
     try {
       final result = await _fmApi.fetchCheckinRecord(
@@ -507,16 +512,23 @@ class FmCheckinViewModel extends ChangeNotifier {
         phone: _userInfo.phone,
       );
 
-      _data = result;
-
-      // 关键：把最新结果同步写入 FmConfigProvider 做缓存，
-      // 下次进入页面时可以直接用 cached 数据初始化。
+      // 即使 ViewModel 被销毁了，缓存仍然可以写回到 FmConfigProvider，
+      // 所以这里不受 _disposed 限制。
       _fmConfigProvider.setCheckinData(result);
+
+      // 但 UI 状态只在未销毁时更新
+      if (!_disposed) {
+        _data = result;
+      }
     } catch (e) {
-      _errorMessage = e.toString();
+      if (!_disposed) {
+        _errorMessage = e.toString();
+      }
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!_disposed) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -524,15 +536,21 @@ class FmCheckinViewModel extends ChangeNotifier {
 
   // 按钮按下/抬起状态（用于缩放和阴影）
   void setButtonPressed(bool value) {
-    if (_isButtonPressed == value) return;
+    if (_isButtonPressed == value || _disposed) return;
     _isButtonPressed = value;
     notifyListeners();
   }
 
   // Hover 状态（Web/桌面有效，移动端无感知）
   void setButtonHover(bool value) {
-    if (_isButtonHover == value) return;
+    if (_isButtonHover == value || _disposed) return;
     _isButtonHover = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
