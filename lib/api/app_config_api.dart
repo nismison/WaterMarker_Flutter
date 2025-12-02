@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:watermarker_v2/api/base/api_client.dart';
 import 'package:watermarker_v2/models/app_config_model.dart';
 

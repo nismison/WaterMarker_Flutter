@@ -1,11 +1,8 @@
-// lib/providers/app_config_provider.dart
-
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-
-import 'package:watermarker_v2/models/app_config_model.dart';   // 提供 AppConfigModel
 import 'package:watermarker_v2/api/app_config_api.dart';      // 提供 AppConfigApi
+import 'package:watermarker_v2/models/app_config_model.dart';   // 提供 AppConfigModel
 
 /// Provider 用于全局维护 AppConfig 状态。
 class AppConfigProvider extends ChangeNotifier {

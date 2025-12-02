@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:share_handler/share_handler.dart';
-
 import 'package:watermarker_v2/api/base/http_client.dart';
 import 'package:watermarker_v2/background/background_fetch_manager.dart';
 import 'package:watermarker_v2/pages/root/main.dart';
@@ -17,8 +16,6 @@ import 'package:watermarker_v2/providers/user_provider.dart';
 import 'package:watermarker_v2/router.dart';
 import 'package:watermarker_v2/services/image_share_service.dart';
 import 'package:watermarker_v2/services/image_sync_service.dart';
-import 'package:watermarker_v2/utils/database_util.dart';
-import 'package:watermarker_v2/utils/storage_util.dart';
 import 'package:watermarker_v2/utils/update_util.dart';
 
 /// App 根组件：
@@ -149,16 +146,10 @@ class _AppRootState extends State<AppRoot> {
     final appConfig = context.read<AppConfigProvider>();
     if (!appConfig.config!.autoUpload.imageEnable) return;
 
-    final hasAll = await StorageUtil.hasAllFilesAccess();
-    if (!hasAll) {
-      debugPrint("[ImageSync] 未授予文件访问权限，跳过自动同步");
-      return;
-    }
-
     const isUpload = true;
 
     final prodService = ImageSyncService(isUpload: isUpload);
-    await prodService.syncAllImages(appConfig);
+    await prodService.syncAllImages(appConfig.config);
   }
 
   Future<void> _initShareHandler() async {
@@ -184,7 +175,7 @@ class _AppRootState extends State<AppRoot> {
 
     // 2. App 已在前台/后台，再通过分享唤醒
     _subscription = _shareHandler.sharedMediaStream.listen(
-      (SharedMedia media) async {
+          (SharedMedia media) async {
         debugPrint('[AppRoot] sharedMediaStream event: $media');
         if (!mounted) return;
         await _handleSharedMedia(media);
@@ -235,9 +226,9 @@ class _AppRootState extends State<AppRoot> {
         final Widget content = isReady
             ? const MainPage()
             : MaterialApp(
-                debugShowCheckedModeBanner: false,
-                home: SplashScreen(controller: _splashController),
-              );
+          debugShowCheckedModeBanner: false,
+          home: SplashScreen(controller: _splashController),
+        );
 
         // =============================================================
         // ★ 全局适配国产 ROM 底部小白条（关键改造）

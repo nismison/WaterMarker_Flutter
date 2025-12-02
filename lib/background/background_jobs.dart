@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:watermarker_v2/api/notify_api.dart';
-
-// 示例：按你项目需要引入自己的 API / 仓库 / 本地存储等
-// import 'package:watermarker_v2/api/order_api.dart';
-// import 'package:watermarker_v2/utils/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:watermarker_v2/models/app_config_model.dart';
+import 'package:watermarker_v2/services/image_sync_service.dart';
 
 /// 所有 background_fetch 触发时统一走这里。
 ///
@@ -60,5 +59,16 @@ Future<void> _handleDefaultPeriodicTask({required bool isHeadless}) async {
 
   // 暂时给一个占位实现，避免你忘了改还能编译通过：
   // TODO: 在这里填入你的定时任务业务逻辑
-  NotifyApi().sendNotify('测试定时业务');
+  final prefs = await SharedPreferences.getInstance();
+  final jsonStr = prefs.getString("app_config");
+  if (jsonStr == null) return;
+
+  try {
+    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+    final config = AppConfigModel.fromJson(data);
+    final prodService = ImageSyncService(isUpload: true);
+    await prodService.syncAllImages(config, notify: true);
+  } catch (_) {
+    return;
+  }
 }

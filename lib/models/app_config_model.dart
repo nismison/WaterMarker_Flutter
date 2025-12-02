@@ -1,5 +1,3 @@
-// lib/utils/app_config_model.dart
-
 /// 解析后的 App 配置模型。
 /// 之所以单独建模型，是为了避免上层直接操作 Map，提升可维护性。
 class AppConfigModel {

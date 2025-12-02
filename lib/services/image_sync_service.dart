@@ -2,15 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:photo_manager/photo_manager.dart';
-
-import 'package:watermarker_v2/providers/app_config_provider.dart';
+import 'package:watermarker_v2/api/filesync/upload_api.dart';
+import 'package:watermarker_v2/api/filesync/upload_chunk_api.dart';
+import 'package:watermarker_v2/api/notify_api.dart';
 import 'package:watermarker_v2/data/local_media_index.dart';
 import 'package:watermarker_v2/data/sqflite_media_index.dart';
-import 'package:watermarker_v2/api/filesync/upload_api.dart';
+import 'package:watermarker_v2/models/app_config_model.dart';
 import 'package:watermarker_v2/utils/device_util.dart';
-
-import 'package:watermarker_v2/api/filesync/upload_chunk_api.dart';
-
+import 'package:watermarker_v2/utils/storage_util.dart';
 import 'package:watermarker_v2/utils/upload_util.dart';
 
 class ImageSyncService {
@@ -40,17 +39,25 @@ class ImageSyncService {
   }
 
   /// 对外入口：在权限已就绪后调用
-  Future<void> syncAllImages(AppConfigProvider appConfig) async {
+  Future<void> syncAllImages(AppConfigModel? appConfig, {bool notify = false}) async {
     final deviceModel = await _ensureDeviceModel();
 
+    final hasAll = await StorageUtil.hasAllFilesAccess();
+    if (!hasAll) {
+      debugPrint("[ImageSync] 未授予文件访问权限，跳过自动同步");
+      if (notify) NotifyApi().sendNotify("[ImageSync] 未授予文件访问权限，跳过自动同步");
+      return;
+    }
+
     final excludeList =
-        (appConfig.config?.autoUpload.excludeDeviceModels ?? const [])
+        (appConfig?.autoUpload.excludeDeviceModels ?? [deviceModel.trim()])
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
             .toSet();
 
     if (excludeList.contains(deviceModel.trim())) {
       debugPrint('[ImageSync] 当前设备($deviceModel) 在 exclude_device_models 中，跳过');
+      if (notify) NotifyApi().sendNotify('[ImageSync] 当前设备($deviceModel) 在 exclude_device_models 中，跳过');
       return;
     }
 
@@ -58,29 +65,26 @@ class ImageSyncService {
     final sw = Stopwatch()..start();
 
     debugPrint('[ImageSync] 当前设备型号: $deviceModel，开始扫描');
+    if (notify) NotifyApi().sendNotify('[ImageSync] 当前设备型号: $deviceModel，开始扫描');
 
     // 1. 扫描所有 assetId（极快）
     PhotoManager.setIgnorePermissionCheck(true);
     final assets = await _scanAllAssets();
     debugPrint('[ImageSync] 扫描完成，共 ${assets.length} 个资源');
+    if (notify) NotifyApi().sendNotify('[ImageSync] 扫描完成，共 ${assets.length} 个资源');
 
     // 2. 查询数据库数据(没有记录或未上传)
     final candidates = <AssetEntity>[];
     for (final asset in assets) {
       final rec = await localIndex.get(asset.id);
       if (rec == null || !rec.uploaded) {
-        // TODO 计算视频文件 md5
-        // int fileSize = 0;
-        // if (asset.mimeType!.startsWith("video")) {
-        //   fileSize = await getAssetSize(asset);
-        // }
-
         candidates.add(asset);
       }
     }
 
     if (candidates.isEmpty) {
       debugPrint('[ImageSync] 全部已上传，无需同步');
+      if (notify) NotifyApi().sendNotify('[ImageSync] 全部已上传，无需同步');
       return;
     }
 
@@ -88,6 +92,7 @@ class ImageSyncService {
     debugPrint(
       '[ImageSync] 本轮需上传 ${candidates.length} 个文件，耗时: ${sw.elapsedMilliseconds} ms',
     );
+    if (notify) NotifyApi().sendNotify('[ImageSync] 本轮需上传 ${candidates.length} 个文件，耗时: ${sw.elapsedMilliseconds} ms');
 
     // 3. 串行上传
     for (final meta in candidates) {
@@ -95,6 +100,7 @@ class ImageSyncService {
     }
 
     debugPrint('[ImageSync] 本轮同步完成');
+    if (notify) NotifyApi().sendNotify('[ImageSync] 本轮同步完成');
   }
 
   /// 只扫描 asset.id，不访问文件
