@@ -1,0 +1,70 @@
+name: Build Android APK (Flutter)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1. 配置 JDK（AGP 8+ 一般需要 JDK 17）
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 2. 安装 Flutter（稳定通道），并缓存 SDK
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true  # 缓存 Flutter SDK
+
+      # 3. 缓存 Dart/Flutter 依赖（pub）
+      - name: Cache Flutter pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      # 4. 缓存 Gradle（Android 依赖 + wrapper）
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # 5. 安装依赖
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # 6. 静态分析（不需要可以注释掉）
+      # - name: Analyze Dart code
+      #   run: flutter analyze
+
+      # 7. 构建 Release APK
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # 8. 上传构建的 APK 作为构建产物
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watermarker-v2-app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
