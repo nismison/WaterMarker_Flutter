@@ -1,0 +1,48 @@
+name: Build Android APK (Flutter)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 配置 JDK（AGP 8+ 一般需要 JDK 17）
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 安装 Flutter（稳定通道）
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # 安装依赖
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # 静态分析（不需要可以注释掉）
+      - name: Analyze Dart code
+        run: flutter analyze
+
+      # 构建 Release APK
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # 上传构建的 APK 作为构建产物
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: watermarker-v2-app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
