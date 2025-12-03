@@ -14,6 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 标记工作流开始时间（秒）
+      - name: Mark workflow start time
+        run: echo "WORKFLOW_START=$(date +%s)" >> $GITHUB_ENV
+
       # 1. 配置 JDK（AGP 8+ 一般需要 JDK 17）
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -26,7 +30,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true  # 缓存 Flutter SDK
+          cache: true
 
       # 3. 缓存 Dart/Flutter 依赖（pub）
       - name: Cache Flutter pub dependencies
@@ -54,17 +58,73 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      # 6. 静态分析（不需要可以注释掉）
-      # - name: Analyze Dart code
-      #   run: flutter analyze
-
-      # 7. 构建 Release APK
+      # 6. 构建 Release APK（不做静态分析）
       - name: Build Android APK
         run: flutter build apk --release
 
-      # 8. 上传构建的 APK 作为构建产物
+      # 7. 上传构建的 APK 作为构建产物
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: watermarker-v2-app-release
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # 8. 构建成功时，调用通知推送 API
+      - name: Notify success
+        if: success()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$(( END_TIME - WORKFLOW_START ))
+          MIN=$(( DURATION / 60 ))
+          SEC=$(( DURATION % 60 ))
+          DURATION_LABEL="${MIN}分${SEC}秒"
+
+          curl --location "$NOTIFY_API_URL" \
+            --header 'Content-Type: application/json' \
+            --data @- <<EOF
+          {
+            "appToken": "$NOTIFY_TOKEN",
+            "summary": "watermarker_v2 APK 构建成功",
+            "content": "分支: ${GITHUB_REF_NAME}\n提交: ${GITHUB_SHA}\n构建ID: ${GITHUB_RUN_ID}\n构建耗时: ${DURATION_LABEL} (${DURATION} 秒)\nAPK 下载页面: ${APK_PAGE_URL}",
+            "contentType": 1,
+            "uids": [
+              "UID_0UhoJ977fvwsJhzXokMmhzgIqFRZ"
+            ]
+          }
+          EOF
+        env:
+          NOTIFY_API_URL: ${{ secrets.NOTIFY_API_URL }}
+          NOTIFY_TOKEN: ${{ secrets.NOTIFY_TOKEN }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          APK_PAGE_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # 9. 构建失败时，调用通知推送 API
+      - name: Notify failure
+        if: failure()
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$(( END_TIME - WORKFLOW_START ))
+          MIN=$(( DURATION / 60 ))
+          SEC=$(( DURATION % 60 ))
+          DURATION_LABEL="${MIN}分${SEC}秒"
+
+          curl --location "$NOTIFY_API_URL" \
+            --header 'Content-Type: application/json' \
+            --data @- <<EOF
+          {
+            "appToken": "$NOTIFY_TOKEN",
+            "summary": "watermarker_v2 APK 构建失败",
+            "content": "分支: ${GITHUB_REF_NAME}\n提交: ${GITHUB_SHA}\n构建ID: ${GITHUB_RUN_ID}\n构建耗时: ${DURATION_LABEL} (${DURATION} 秒)\n构建详情页面: ${APK_PAGE_URL}",
+            "contentType": 1,
+            "uids": [
+              "UID_0UhoJ977fvwsJhzXokMmhzgIqFRZ"
+            ]
+          }
+          EOF
+        env:
+          NOTIFY_API_URL: ${{ secrets.NOTIFY_API_URL }}
+          NOTIFY_TOKEN: ${{ secrets.NOTIFY_TOKEN }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          APK_PAGE_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
