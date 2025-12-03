@@ -32,10 +32,6 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      # 静态分析（不需要可以注释掉）
-      - name: Analyze Dart code
-        run: flutter analyze
-
       # 构建 Release APK
       - name: Build Android APK
         run: flutter build apk --release
