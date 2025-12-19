@@ -60,7 +60,7 @@ jobs:
 
       # 6. 构建 Release APK（不做静态分析）—— 通过环境变量注入 p12/base64 + 口令 + alias
       - name: Build Android APK
-        run: flutter build apk --release --verbose
+        run: flutter build apk --release
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
