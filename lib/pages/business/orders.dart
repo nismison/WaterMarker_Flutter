@@ -24,6 +24,16 @@ Duration calcTimeoutDiff(String timeout) {
   return timeoutTime.difference(now);
 }
 
+String extractFirstBuildingCode(WorkOrder order) {
+  if (order.title != "单元楼栋月巡检" && order.title != "天台风险月巡查") return "";
+
+  final reg = RegExp(r'[a-zA-Z]\d+');
+  final firstMatch = reg.firstMatch(order.address);
+
+  // 等价于 Python matches[0]
+  return firstMatch?.group(0) ?? "";
+}
+
 class OrdersPage extends StatelessWidget {
   const OrdersPage({super.key});
 
@@ -86,7 +96,7 @@ class _WorkOrderCard extends StatelessWidget {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    order.title,
+                    "${order.title} ${extractFirstBuildingCode(order)}",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'http_client.dart';
+import 'package:watermarker_v2/api/base/http_client.dart';
 
 abstract class ApiClient {
   final HttpClient _client = HttpClient();

@@ -10,6 +10,7 @@ class WorkOrder {
   final String timeout; // yyyy-MM-dd hh:mm:ss
   final String orderType; // "pending_accept" / "pending_process"
   final String orderId;
+  final String address;
 
   const WorkOrder({
     required this.title,
@@ -18,6 +19,7 @@ class WorkOrder {
     required this.timeout,
     required this.orderType,
     required this.orderId,
+    required this.address,
   });
 }
 
@@ -81,6 +83,7 @@ class WorkOrderProvider extends ChangeNotifier {
               sourceName: item.sourceName ?? "",
               orderType: "pending_accept",
               orderId: item.id,
+              address: item.address ?? "",
             ),
           )
           .toList();
@@ -112,6 +115,7 @@ class WorkOrderProvider extends ChangeNotifier {
               sourceName: item.sourceName ?? "",
               orderType: "pending_process",
               orderId: item.id,
+              address: item.address ?? "",
             ),
           )
           .toList();
