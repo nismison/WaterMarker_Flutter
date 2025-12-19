@@ -58,9 +58,16 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      # 6. 构建 Release APK（不做静态分析）
+      # 6. 构建 Release APK（不做静态分析）—— 通过环境变量注入 p12/base64 + 口令 + alias
       - name: Build Android APK
         run: flutter build apk --release
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: watermarkerv2
+          # 你生成 p12 时没有设置私钥密码 => keyPassword 等于 storePassword
+          # ANDROID_KEY_PASSWORD 不必设置；若你想显式指定，也可以打开下面一行：
+          # ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
 
       # 7. 上传构建的 APK 作为构建产物
       - name: Upload APK artifact
