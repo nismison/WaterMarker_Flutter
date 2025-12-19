@@ -20,13 +20,19 @@ plugins {
  * - 只要执行的是 release 相关任务（assembleRelease / bundleRelease / ...），必须有签名信息，否则直接失败。
  */
 
+data class SigningData(
+    val storeFile: File,
+    val storePassword: String,
+    val keyAlias: String,
+    val keyPassword: String,
+)
+
 fun isReleaseBuildInvocation(): Boolean {
-    // Flutter -> Gradle 通常会触发 :app:assembleRelease 或 :app:bundleRelease
     val tasks = gradle.startParameter.taskNames.joinToString(" ").lowercase()
     return tasks.contains("release")
 }
 
-val isReleaseBuild = isReleaseBuildInvocation()
+val isReleaseBuild: Boolean = isReleaseBuildInvocation()
 
 fun requiredEnv(name: String): String {
     val v = System.getenv(name)?.trim()
@@ -36,9 +42,11 @@ fun requiredEnv(name: String): String {
     return v
 }
 
-fun optionalEnv(name: String): String? = System.getenv(name)?.trim().takeUnless { it.isNullOrEmpty() }
+fun optionalEnv(name: String): String? =
+    System.getenv(name)?.trim().takeUnless { it.isNullOrEmpty() }
 
-val signing = if (isReleaseBuild) {
+// 显式类型：避免 Kotlin DSL 推断成 Any
+val signing: SigningData? = if (isReleaseBuild) {
     val base64 = requiredEnv("ANDROID_KEYSTORE_BASE64")
     val storePass = requiredEnv("ANDROID_STORE_PASSWORD")
     val alias = optionalEnv("ANDROID_KEY_ALIAS") ?: "watermarkerv2"
@@ -60,12 +68,12 @@ val signing = if (isReleaseBuild) {
         throw GradleException("Decoded keystore file is empty: ${p12File.absolutePath}")
     }
 
-    object {
-        val storeFile: File = p12File
-        val storePassword: String = storePass
-        val keyAlias: String = alias
-        val keyPassword: String = keyPass
-    }
+    SigningData(
+        storeFile = p12File,
+        storePassword = storePass,
+        keyAlias = alias,
+        keyPassword = keyPass,
+    )
 } else {
     null
 }
@@ -81,6 +89,7 @@ android {
     }
 
     kotlinOptions {
+        @Suppress("DEPRECATION")
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
@@ -94,7 +103,6 @@ android {
 
     signingConfigs {
         if (isReleaseBuild) {
-            // isReleaseBuild 时 signing 一定不为 null，否则上面已经 hard-fail
             val s = signing ?: throw GradleException("Internal error: signing data is null in release build.")
             create("release") {
                 storeFile = s.storeFile
@@ -109,7 +117,7 @@ android {
     buildTypes {
         release {
             if (!isReleaseBuild) {
-                // 理论上不会发生（release buildType 被用到时通常任务名包含 release）
+                // 防止出现“选了 release buildType，但任务名不含 release”的异常情况
                 throw GradleException("Release buildType selected but Gradle task names do not contain 'release'.")
             }
             signingConfig = signingConfigs.getByName("release")
