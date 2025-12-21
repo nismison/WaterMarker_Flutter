@@ -56,7 +56,7 @@ class SlidingBottomNavBar extends StatelessWidget {
       top: false,
       child: Padding(
         // 让 dock 左右有点空隙，更像一块悬浮的板
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(999),
           child: BackdropFilter(
