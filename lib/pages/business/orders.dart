@@ -88,11 +88,7 @@ class _WorkOrderCard extends StatelessWidget {
             // 1. 工单标题（加粗黑色字体）
             Row(
               children: [
-                calcTimeoutDiff(order.timeout).inHours < 2
-                    ? buildStatusPill("即将超时", Colors.red)
-                    : calcTimeoutDiff(order.timeout).inHours < 24
-                    ? buildStatusPill("今日超时", Colors.orange)
-                    : buildStatusPill("无超时风险", Colors.green),
+                buildTimeoutPill(calcTimeoutDiff(order.timeout)),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -349,6 +345,32 @@ class _WorkOrderCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget buildTimeoutPill(Duration diff) {
+    // 兜底：如果已经超时（diff 为负），给一个明确提示
+    if (diff.isNegative) {
+      return buildStatusPill("已超时", Colors.red);
+    }
+
+    final hours = diff.inHours;
+
+    // 规则：小时数 > 24 => 剩余x天
+    if (hours > 24) {
+      final days = diff.inDays; // 下取整
+      final safeDays = days <= 0 ? 1 : days;
+      return buildStatusPill("剩余$safeDays天", Colors.green);
+    }
+
+    // 规则：小时数 < 24 且 > 1 => x小时后超时
+    if (hours > 1) {
+      return buildStatusPill("剩余$hours小时", Colors.orange);
+    }
+
+    // 规则：小时数 < 1 => x分钟后超时
+    final minutes = diff.inMinutes;
+    final safeMinutes = minutes <= 0 ? 1 : minutes;
+    return buildStatusPill("剩余$safeMinutes分钟", Colors.red);
   }
 }
 

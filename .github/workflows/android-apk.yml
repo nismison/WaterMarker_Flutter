@@ -10,6 +10,10 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
 
+    # 需要写权限：用于推送 tag + 创建 release + 上传 release assets
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,6 +21,12 @@ jobs:
       # 标记工作流开始时间（秒）
       - name: Mark workflow start time
         run: echo "WORKFLOW_START=$(date +%s)" >> $GITHUB_ENV
+
+      # 设置默认 APK 页面（PR 或未发布 Release 时用 Actions Run 页面）
+      - name: Set default APK URLs
+        run: |
+          echo "APK_PAGE_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+          echo "APK_DIRECT_URL=" >> $GITHUB_ENV
 
       # 1. 配置 JDK（AGP 8+ 一般需要 JDK 17）
       - name: Set up Java
@@ -69,12 +79,51 @@ jobs:
           # ANDROID_KEY_PASSWORD 不必设置；若你想显式指定，也可以打开下面一行：
           # ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
 
-      # 7. 上传构建的 APK 作为构建产物
+      # 7. 上传构建的 APK 作为构建产物（保留原功能：Actions Artifacts）
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: watermarker-v2-app-release
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # 7.1 仅在 push main 且构建成功时：创建 tag（每次构建一个唯一 tag）
+      - name: Create release tag
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+
+          TAG="build-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 以当前提交打 tag 并推送
+          git tag -a "$TAG" -m "Automated build for ${GITHUB_SHA}"
+          git push origin "$TAG"
+
+          # 发布后：把通知里“APK 下载页面”改成 Release 页面，并给出直接下载链接
+          echo "APK_PAGE_URL=${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG" >> $GITHUB_ENV
+          echo "APK_DIRECT_URL=${{ github.server_url }}/${{ github.repository }}/releases/download/$TAG/watermarker-v2-$TAG.apk" >> $GITHUB_ENV
+
+      # 7.2 准备一个带 tag 的 APK 文件名（作为 Release Asset 上传）
+      - name: Prepare APK for release
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -e
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/watermarker-v2-${RELEASE_TAG}.apk"
+
+      # 7.3 创建 GitHub Release 并上传 APK（可直接下载，无需解压）
+      - name: Publish GitHub Release (attach APK)
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.RELEASE_TAG }}
+          name: watermarker_v2 ${{ env.RELEASE_TAG }}
+          artifacts: dist/watermarker-v2-${{ env.RELEASE_TAG }}.apk
+          artifactErrorsFailBuild: true
+          prerelease: false
 
       # 8. 构建成功时，调用通知推送 API
       - name: Notify success
@@ -86,13 +135,20 @@ jobs:
           SEC=$(( DURATION % 60 ))
           DURATION_LABEL="${MIN}分${SEC}秒"
 
+          # 直接下载链接可能为空（例如 PR 构建），这里做个兜底展示
+          if [ -n "$APK_DIRECT_URL" ]; then
+            DIRECT_LINE="APK 直接下载: ${APK_DIRECT_URL}"
+          else
+            DIRECT_LINE="APK 直接下载: (无)"
+          fi
+
           curl --location "$NOTIFY_API_URL" \
             --header 'Content-Type: application/json' \
             --data @- <<EOF
           {
             "appToken": "$NOTIFY_TOKEN",
             "summary": "watermarker_v2 APK 构建成功",
-            "content": "分支: ${GITHUB_REF_NAME}\n提交: ${GITHUB_SHA}\n构建ID: ${GITHUB_RUN_ID}\n构建耗时: ${DURATION_LABEL} (${DURATION} 秒)\nAPK 下载页面: ${APK_PAGE_URL}",
+            "content": "分支: ${GITHUB_REF_NAME}\n提交: ${GITHUB_SHA}\n构建ID: ${GITHUB_RUN_ID}\n构建耗时: ${DURATION_LABEL} (${DURATION} 秒)\nAPK 下载页面: ${APK_PAGE_URL}\n${DIRECT_LINE}",
             "contentType": 1,
             "uids": [
               "UID_0UhoJ977fvwsJhzXokMmhzgIqFRZ"
@@ -104,7 +160,8 @@ jobs:
           NOTIFY_TOKEN: ${{ secrets.NOTIFY_TOKEN }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
-          APK_PAGE_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          APK_PAGE_URL: ${{ env.APK_PAGE_URL }}
+          APK_DIRECT_URL: ${{ env.APK_DIRECT_URL }}
 
       # 9. 构建失败时，调用通知推送 API
       - name: Notify failure
