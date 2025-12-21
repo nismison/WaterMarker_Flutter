@@ -189,7 +189,7 @@ class _WorkOrderCard extends StatelessWidget {
                                   .contentStyle
                                   .copyWith(
                                     padding: EdgeInsets.symmetric(
-                                      vertical: 10,
+                                      vertical: 8,
                                       horizontal: 14,
                                     ),
                                   )
@@ -273,7 +273,7 @@ class _WorkOrderCard extends StatelessWidget {
                                   .contentStyle
                                   .copyWith(
                                     padding: EdgeInsets.symmetric(
-                                      vertical: 10,
+                                      vertical: 8,
                                       horizontal: 14,
                                     ),
                                   )
@@ -311,7 +311,10 @@ class _WorkOrderCard extends StatelessWidget {
                             GlobalLoading().hide();
                           }
                         },
-                        child: const Text("接单", style: TextStyle(fontSize: 13)),
+                        child: const Text(
+                          "接单",
+                          style: TextStyle(fontSize: 13, height: 1),
+                        ),
                       ),
               ],
             ),
@@ -510,10 +513,8 @@ class _PendingProcessListState extends State<PendingProcessList>
           data: provider.pendingProcess,
           isLoading: provider.isLoadingPendingProcess,
           emptyText: '暂无待处理工单',
-          actionText: '一键关单',
-          onAction: () {
-            // TODO: 一键关单逻辑，同样建议放到 Provider
-          },
+          actionText: '',
+          onAction: () {},
           onRefresh: provider.refreshPendingProcess,
         );
       },
@@ -592,35 +593,36 @@ class WorkOrderList extends StatelessWidget {
                           },
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: FButton(
-                          style: context.theme.buttonStyles.primary
-                              .copyWith(
-                                contentStyle: context
-                                    .theme
-                                    .buttonStyles
-                                    .primary
-                                    .contentStyle
-                                    .copyWith(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 20,
-                                        horizontal: 15,
-                                      ),
-                                    )
-                                    .call,
-                              )
-                              .call,
-                          onPress: onAction,
-                          child: Text(
-                            actionText,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              height: 1,
+                      if (actionText.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: FButton(
+                            style: context.theme.buttonStyles.primary
+                                .copyWith(
+                                  contentStyle: context
+                                      .theme
+                                      .buttonStyles
+                                      .primary
+                                      .contentStyle
+                                      .copyWith(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 20,
+                                          horizontal: 15,
+                                        ),
+                                      )
+                                      .call,
+                                )
+                                .call,
+                            onPress: onAction,
+                            child: Text(
+                              actionText,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   )),
     );
