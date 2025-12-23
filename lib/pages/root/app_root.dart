@@ -77,7 +77,6 @@ class _AppRootState extends State<AppRoot> {
 
     // 设置后端 BaseUrl
     _splashController.updateMessage('正在配置网络...');
-    HttpClient.setBaseUrl('https://api.zytsy.icu');
     // HttpClient.setBaseUrl('http://192.168.1.9:5001');
 
     // 加载配置

@@ -25,13 +25,16 @@ Duration calcTimeoutDiff(String timeout) {
 }
 
 String extractFirstBuildingCode(WorkOrder order) {
-  if (order.title != "单元楼栋月巡检" && order.title != "天台风险月巡查") return "";
+  if (order.title == "单元楼栋月巡检" || order.title == "天台风险月巡查") {
+    final reg = RegExp(r'[a-zA-Z]\d+');
+    final firstMatch = reg.firstMatch(order.address);
 
-  final reg = RegExp(r'[a-zA-Z]\d+');
-  final firstMatch = reg.firstMatch(order.address);
+    return firstMatch?.group(0) ?? "";
+  } else if (order.title == "干粉灭火器月巡检") {
+    return order.address;
+  }
 
-  // 等价于 Python matches[0]
-  return firstMatch?.group(0) ?? "";
+  return "";
 }
 
 class OrdersPage extends StatelessWidget {
@@ -91,13 +94,18 @@ class _WorkOrderCard extends StatelessWidget {
                 buildTimeoutPill(calcTimeoutDiff(order.timeout)),
                 SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    "${order.title} ${extractFirstBuildingCode(order)}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        order.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -119,6 +127,30 @@ class _WorkOrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (extractFirstBuildingCode(order).isNotEmpty) Row(
+                        children: [
+                          Icon(FIcons.mapPinHouse, size: 16),
+                          SizedBox(width: 5),
+                          Text(
+                            "地址：",
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            extractFirstBuildingCode(order),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Icon(FIcons.sparkles, size: 16),
@@ -150,7 +182,7 @@ class _WorkOrderCard extends StatelessWidget {
                               Icon(FIcons.calendarClock, size: 16),
                               SizedBox(width: 5),
                               Text(
-                                '超时时间：',
+                                '时限：',
                                 style: TextStyle(
                                   fontSize: 14,
                                   height: 1.4,
